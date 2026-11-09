@@ -1,107 +1,126 @@
 # Suzuki OBD Professional (J2534 Diagnostic Suite) — BETA
 
+<div align="center">
+
+![Suzuki OBD Professional Banner](docs/screenshots/service_calibration_screen.png)
+
+### Professional Multi-ECU Diagnostic, Calibration, Coding & Key Programming Software for Suzuki Vehicles
+**Zero Dependencies · Native C++ Server · High-Performance Standalone J2534 Stack**
+
+[![Release](https://img.shields.io/badge/Release-v2.28.01--BETA-blue.svg)](https://github.com)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x86%20%2F%20x64)-lightgrey.svg)](https://github.com)
+[![Protocols](https://img.shields.io/badge/Protocols-ISO%2015765%20(CAN)%20%7C%20ISO%2014230%20(K--Line)%20%7C%20ISO%2014229%20(UDS)-orange.svg)](https://github.com)
+[![Hardware](https://img.shields.io/badge/Hardware-SAE%20J2534%20PassThru-success.svg)](https://github.com)
+[![Language](https://img.shields.io/badge/Language-English%20(Default)%20%7C%20T%C3%BCrk%C3%A7e-blueviolet.svg)](https://github.com)
+
+</div>
+
+---
+
 > [!WARNING]
 > **BETA RELEASE — HARDWARE VERIFICATION NOTICE**
-> This software is currently in **BETA** stage. Not 100% of Suzuki models have been physically tested yet.
-> - **Physically Hardware-Verified Vehicle:** **Suzuki Grand Vitara 1.9 DDiS (JB419D / F9Q)** (CAN + K-Line Pin 7).
-> - **Other Suzuki Models:** Protocol definitions, ECU addresses, calibrations, and BCM coding routines are included for experimental / beta testing across CAN (`ISO 15765-4`) and K-Line (`ISO 14230-4`). Use at your own discretion.
-
-A standalone, zero-dependency C++ diagnostic server and bilingual (English default / Turkish optional) web interface for Suzuki vehicles using any standard SAE J2534 PassThru adapter (MongoosePro JLR, Scanmatik 2 Pro, Tactrix OpenPort 2.0, VCX SE, Chipsoft, etc.).
-
-Supports **CAN (`ISO 15765-4` / 500 kbps)**, **K-Line (`ISO 14230-4` KWP2000 Fast Init / Pin 7 / 10400 baud)**, and **UDS (`ISO 14229`)**.
+> This software is currently in active **BETA** stage. Not 100% of Suzuki models have been physically field-tested yet.
+> - **Physically Hardware-Verified Vehicle:** **Suzuki Grand Vitara 1.9 DDiS (JB419D / F9Q)** (Tested on CAN bus and K-Line Pin 7).
+> - **Other Suzuki Models:** Protocol definitions, ECU target addresses, service calibrations, and BCM coding routines are fully implemented and mapped for experimental/beta testing across CAN (`ISO 15765-4`), K-Line (`ISO 14230-4`), and UDS (`ISO 14229`).
 
 ---
 
-## Key Features
+## 📸 Screenshots & Interface
 
-1. **System Scan & DTC Diagnostics (Tab 1):**
-   - Full multi-ECU scanning across Powertrain (ECM/TCM), ABS/ESP, 4WD/AllGrip, BCM, Airbag/SRS, EPS, Combination Meter (IPC), HVAC Climate, TPMS, and Keyless/Immobilizer.
-   - Automatic vehicle identification (`4,058` ECU identity rules & `1,636` model definitions) that dynamically filters the interface to match the connected vehicle.
-   - `18,225` bilingual (English / Turkish) DTC descriptions and Freeze-Frame snapshot decoding (`12`, `19 04`, `21 87`).
+<div align="center">
 
-2. **Live Data / Data List (Tab 2):**
-   - Real-time engine & chassis telemetry (RPM, rail pressure, boost, DPF soot mass, differential pressure, temperatures, steering angle, yaw rate, lateral G).
-   - `6,337` extended Service `21` / `22` parameters and `165` computed parameters.
+| Service & Calibration Suite (Tab 3) | Diagnostic Scan & Real-Time Monitoring |
+|:---:|:---:|
+| ![Service & Calibration](docs/screenshots/service_calibration_screen.png) | ![Overview](docs/screenshots/overview_screen.png) |
 
-3. **Service, Calibrations & Actuator Tests (Tab 3):**
-   - **23 One-Click Quick Service Cards** dynamically filtered by detected vehicle profile:
-     - Grand Vitara 1.9 DDiS (`F9Q`): EGR adaptation reset, Inlet throttle learning, Injector IMA read & ZFC reset, DPF soot reset & service regeneration, Oil dilution reset, High-pressure rail leak test, ECM replacement memory transfer, Starter check.
-     - CAN Diesel (`D13A` / `D16AA` / `D20AA`): DPF regeneration, Oil reset, EGR learning, Diff-pressure / MAF / A-F / Rail sensor resets.
-     - Petrol ECM: Throttle learning, IAC reset, Fuel trim reset, Brake stroke & GPF reset.
-     - Chassis & Body: SAS & G-Sensor calibration, ABS air bleeding, TCM/AMT/CVT learning, EPS zero-point calibration, BCM crash history clear, TPMS registration, IPC service reset, Auto Headlight Leveling (`ALC`) init.
-   - **Full Searchable Catalog:** `631` Active Tests (ON / ALT / EXIT) and `570` Utility procedures.
-
-4. **ECU Identity & Direct K-Line Tools (Tab 4):**
-   - Direct `ISO 14230` Fast-Init K-Line access on Pin 7 (`0x29` ABS, `0x21` 4WD, `0x5A` BCM, `0x59` SRS, `0x5B` IMM, `0x99` AC, `0x11` ECM, `0x13` TCM, `0x31` EPS).
-   - Local ID scanner (`21 01..FE`) and offline packet decoder.
-
-5. **Model-by-Model Hidden Features, BCM Coding & Immobilizer / Key Programming (Tab 5):**
-   - **Immobilizer, Transponder & Keyless Key Programming (`IMMO-01..207` — `POST /api/immo/action`):**
-     - **Safe Read-Only Diagnostics (No PIN Required):**
-       - Read Registered Key Count & Registration Year/Month (`21 A1` / `21 A0` / `21 01` across CAN `0x7E0`/`0x7E4` & K-Line `0x5A`/`0x5B`/`0x11`).
-       - Read Transponder Key Chip 10-Byte ID (`21 B0` — `IMMO-05`, `IMMO-06`, `IMMO-201`).
-       - Direct EEPROM PIN Read (`10 C0 -> 21 21` — `IMMO-106`).
-       - Keyless Interior Antenna Diagnosis (`2F 01 06 03 00 05` — `BCM-167`).
-     - **4-Digit PIN Key & Remote Registration (Grand Vitara JB, Swift, SX4, Jimny — CAN & K-Line):**
-       - Built-in Suzuki Factory PIN presets (`0895`, `9502`, `5634`, `0325`) + custom 4-digit PIN entry.
-       - Safe **Verify PIN Only** check (`30 A0 07 80 80 <PIN>` CAN / `A5 A0 80 00 <PIN>` K-Line).
-       - **Register Transponder Key** (`30 A1 08 80 80` CAN / `A5 A1 80 00` K-Line / `31 A1 00` `IMMO-202` / `3B D2 00 01` `IMMO-203`).
-       - **Register Remote Controller Fob** (`A5 A1 20 00` K-Line / `30 62 07` CAN `IMMO-204`).
-       - **ECM <-> Immobilizer Control Unit Pairing / Initialization** (`31 01 <PIN>` — `IMMO-101`).
-       - **Electronic Steering Lock (ESL) Unlock** (`31 0D 00 <PIN>` — `IMMO-109`).
-       - **Erase All Registered Keys** (`30 A1 08 08` CAN / `A5 A1 08` K-Line, protected by double confirmation).
-     - **2015+ UDS Seed-Key Immobilizer (`IMMO-110..113` — Vitara LY, S-Cross, Swift A2L):**
-       - Request Security Seed (`10 03 -> 27 03`) and Send Calculated Key (`27 04 <KEY> -> 31 01 01 0D`).
-   - **21 Model-Specific Hidden Features & BCM Personalizations:**
-     - Reads current BCM configuration state (`21 08` / `21 01` across CAN `0x7E4` and K-Line `0x5A`) and automatically filters **21 hidden features / personalizations** according to the selected or auto-detected vehicle profile:
-     - `HF-DRL`: Daytime Running Lights (DRL) ON / OFF (`30 36 08 80`)
-     - `HF-AUTOLOCK`: Speed (15 km/h) or Shift-linked Auto Door Lock (`30 35 08 01` / `3B 2F`)
-     - `HF-AUTOUNLOCK`: Ignition OFF or Shift-P Auto Door Unlock (`30 35 08 02` / `3B 02`)
-     - `HF-LANEFLASH`: Comfort Turn Signal Lane-Change Flash Count (`OFF` / `2` / `3` / `4` Flashes `30 35 08 20`)
-     - `HF-MIRROR`: Auto Folding Side Mirrors on Lock (`30 33 08 20`)
-     - `HF-CORNER`: Cornering Fog Lights (`30 31 08 04`)
-     - `HF-BUZZER`: Lock / Unlock Buzzer, Horn, or Siren Answerback (`30 33 08 80` / `3B 2B`)
-     - `HF-ALARM`: Factory Security Anti-Theft Alarm ON / OFF (`30 34 08 20` / `30 09 08 20` / `3B 21`)
-     - `HF-UNLOCKMODE`: Remote Door Unlock Behavior (`1-Press All Doors` vs `2-Press Driver First` `30 3B 08 10`)
-     - `HF-FOLLOWHOME`: Guide Me Home / Follow Me Home Headlight Timer (`0s..30s` `30 3B 08 02` / `3B 39`)
-     - `HF-GUIDECAR`: Guide Me To Car Welcome Lighting Timer (`0s..25s` `30 3B 08 04`)
-     - `HF-FOOTLIGHT`: Footwell Ambient Lighting Mode (`Headlights+Doors` / `Doors Only` / `OFF` `30 3B 08 80`)
-     - `HF-HBA`: High Beam Assist Activation (`30 36 08 40`)
-     - `HF-ANSWERLIGHT`: Lock Flash Mode (`Hazard Lights` vs `Interior Dome Lamp Only` `30 35 08 80` / `30 10 08 80`)
-     - `HF-AUTOLIGHT-HW`: Auto Light Sensor / Keyless / I-Key Retrofit Variant Coding (`3B 3A` / `3B 33` / `3B 34`)
-     - `HF-ROOMLAMP`: Interior Dome Lamp Fade-Out Delay Timer (`3B 16` / `3B 17`)
-     - `HF-RETAINEDPWR`: Retained Power Window Operation After IG-OFF (`3B 27`)
-     - `HF-UDS-IKEY`: UDS Smart Key & Door Handle Request Switch Customization (`2E 14 01..14`)
-     - `HF-SEATBELT`: Seatbelt Reminder Acoustic Chime ON / OFF (`2E 20 41`)
-     - `HF-CLUSTER-THEME`: Cluster / Center Display Icon Color Theme (`30 05 07 40` / `31 01 C0 11`)
-     - `HF-ESP-DYNO`: ESP Off-Road / Dyno Full Deactivation Mode (`30 80 07 04`)
-8. **Immobilizer, Transponder & Keyless Key Programming (`IMMO-01..207` — 12 Actions)**
-   - **Safe Read-Only Diagnostics (No PIN Required):** Registered Key Count & Date (`21 A1` / `21 01`), Transponder Chip ID (`21 B0`), Direct EEPROM PIN Read (`10 C0 -> 21 21`), Keyless Interior Antenna Test (`2F 01 06`).
-   - **4-Digit PIN Key & Remote Coding (CAN `0x7E4` & K-Line `0x5B`/`0x5D`):** Factory Suzuki PIN presets (`0895`, `9502`, `5634`, `0325`) + custom PIN, Safe PIN Verification (`30 A0 07 80` / `A5 A0 80`), Transponder Key Registration (`30 A1 08 80` / `A5 A1 80`), Remote Fob Registration (`A5 A1 20` / `30 62 07`), ECM–Immobilizer Pairing (`31 01 + PIN`), Electronic Steering Lock (ESL) Unlock (`31 0D 00 + PIN`), and Double-Confirmed Erase All Keys (`30 A1 08 08` / `A5 A1 08`).
-   - **2015+ UDS Seed-Key Immobilizer (`IMMO-110..113`):** Dynamic Seed Request (`10 03 -> 27 03`) and Key Unlock + Key Registration (`27 04 -> 31 01 01 0D`).
-9. **Injector IMA Calibration Code Read/Write (Cylinders 1–4) & 17-Digit VIN Read/Write**
-   - **Injector IMA Coding (`POST /api/injector/ima`):** Reads and writes individual 7-character Injector IMA codes for Cylinders 1–4 (`21 AD` -> `3B AD FF <28 ASCII>` + `3B 7E FE` ZFC Reset on F9Q 1.9 DDiS, plus `21 54` / `3B 54` on CAN Diesel).
-   - **VIN Read & Registration (`POST /api/vin`):** Reads 17-character VIN via `1A 90`, `22 F1 90`, `21 90`, `09 02` (CAN & K-Line) and writes 17-character ASCII VIN to replacement ECMs (`30 12/76 08 80` / `A5 0F 40` unlock -> `3B 90` / `2E F1 90`).
-10. **EPB, HVAC, SHVS Hybrid & ADAS Calibrations + Road-Test CSV Logger & HTML Report Export**
-    - **4 Additional Quick Service Cards:** `EPB-01` Electronic Parking Brake Pad Replacement Mode, `HVAC-01` Climate Air Mix Flap & Compressor Init, `HVBMU-01` SHVS Mild/Strong Hybrid BMU Reset, and `ADAS-01` Camera/Radar/BSM/360 AVM Calibration Init.
-    - **Road-Test CSV Data Logger & HTML Diagnostic Report:** Record live sensor streams to `.csv` during road tests (Tab 2) and export a full vehicle ECU & DTC scan report as `.html` in one click (Tab 1).
+</div>
 
 ---
 
-## Quick Start
+## 🌟 Overview & Architecture
 
-### Prerequisites
-1. Windows 10 or 11 (x86/x64).
-2. Installed 32-bit SAE J2534 PassThru driver (MongoosePro, Scanmatik 2, OpenPort 2.0, etc.).
-3. Visual Studio 2022 C++ x86 build tools (only required if compiling from source).
+**Suzuki OBD Professional** is a standalone, high-performance diagnostic suite specifically engineered for Suzuki vehicles using any compliant **SAE J2534 PassThru** interface (MongoosePro JLR/Toyota, Scanmatik 2 Pro, Tactrix OpenPort 2.0, VCX SE, Chipsoft, etc.).
 
-### Running
-1. Launch `Suzuki_Diyagnostik_Baslat.bat` or run `suzuki_diag_server.exe`.
-2. Open your browser at `http://127.0.0.1:8080`.
-3. Default UI language is **English (`EN`)**; you can switch to **Turkish (`TR`)** anytime from the top-right selector.
-4. Connect your J2534 interface to the vehicle's OBD-II port, turn Ignition ON, and click **Connect**.
+Unlike bloated generic OBD tools, this suite contains comprehensive native protocol definitions, local identifier (Service `21`/`22`) mappings, OEM adaptation utilities, BCM personalized hidden feature coding, and transponder key programming routines.
 
-### Compiling from Source
+- **Standalone Native Core:** Compiled into a single 32-bit Windows executable (`suzuki_diag_server.exe`) with zero runtime dependencies.
+- **Embedded Web UI:** Responsive, single-screen responsive interface (`index.html`) with English set as permanent default and instant one-click Turkish localization.
+- **Multi-Protocol Engine:** Synchronous support for **CAN (500 kbps)**, **K-Line Pin 7 (ISO 14230-4 Fast Init @ 10,400 baud)**, and **UDS (ISO 14229)** with automatic bus arbitration and fallback.
+
+---
+
+## 🚀 Key Modules & Capabilities
+
+### 1. System Scan & Full Vehicle DTC Inspection (Tab 1)
+- **Deep Multi-ECU Topology:** Scans Powertrain (ECM/TCM), ABS/ESP/VDC, 4WD/AllGrip, BCM (Body Control), SRS Airbag, EPS (Electric Power Steering), IPC (Combination Meter), HVAC Climate Control, TPMS, and Keyless Entry/Immobilizer.
+- **Intelligent ECU Recognition:** Matches against `4,058` ECU identity rules and `1,636` model variants to configure service scripts specifically for your chassis.
+- **Extensive DTC Library:** `18,225` factory DTC descriptions with diagnostic check points.
+- **Freeze-Frame Analysis:** Automatic frame decoding across Service `12`, Service `19 04`, and Service `21 87`.
+- **1-Click HTML Report Export:** Generates clean, printable `.html` diagnostic health reports.
+
+### 2. Live Data Telemetry & Road-Test CSV Logger (Tab 2)
+- High-rate streaming of essential engine and chassis parameters (RPM, Common Rail Pressure, Boost Pressure, DPF Soot Load, Differential Pressure, EGT Temperatures, Steering Angle Sensor [SAS], Yaw Rate, Lateral Acceleration).
+- Extended access to `6,337` parameters (Services `21` / `22`) and `165` computed formulas.
+- **Road-Test CSV Recorder:** Timestamped `.csv` logging with one-click export for spreadsheet tuning and diagnosis.
+
+### 3. OEM Service, Calibrations & Actuator Tests (Tab 3)
+- **27 One-Click Quick Service & Calibration Cards:**
+  - **Grand Vitara 1.9 DDiS (`F9Q`):** EGR adaptation reset, Inlet throttle flap calibration, Injector IMA read & ZFC reset, DPF soot initialization, DPF service regeneration, Oil dilution counter reset, Common rail high-pressure leak check, ECM memory transfer, Starter motor check.
+  - **CAN Diesel (`D13A` / `D16AA` / `D20AA`):** DPF regeneration, Oil service reset, EGR learning value reset, Diff-pressure / MAF / Rail component replacement resets.
+  - **Petrol Powertrain:** Electronic throttle learning, Idle Air Control (`IAC`) reset, Short/Long term fuel trim reset, Brake stroke learning, GPF adaptation.
+  - **Chassis & Body Systems:** ABS/ESP Steering Angle (`SAS`) & G-Sensor calibration, ABS hydraulic air bleeding, TCM/CVT/AMT clutch learning reset, EPS zero-point calibration, Airbag crash history clear, TPMS sensor registration, IPC service reminder reset, Auto Headlight Leveling (`ALC`) sensor init.
+  - **New Calibrations:** `EPB-01` Electronic Parking Brake pad replacement mode, `HVAC-01` Climate air mix flap & compressor init, `HVBMU-01` SHVS Mild-Hybrid / Strong Hybrid BMU reset, and `ADAS-01` Camera/Radar/BSM calibration.
+- **Injector IMA Coding Box:** Cylinder 1–4 individual 7-character IMA code read (`21 AD` / `21 54`) and write (`3B AD FF`) with automated Zero Fuel Calibration (`3B 7E FE`) reset.
+- **17-Digit VIN Read & Write Box:** ECM chassis number read (`1A 90`, `22 F1 90`, `21 90`, `09 02`) and registration/write (`3B 90` / `2E F1 90`) with security access unlock.
+- **Database Catalog:** Searchable catalog of **631 Active Tests** and **570 Utility Procedures**.
+
+### 4. ECU Identification & Direct K-Line Access (Tab 4)
+- Direct ISO 14230 Fast Init terminal for Suzuki Pin 7 K-Line controllers (`0x29` ABS, `0x21` 4WD, `0x5A` BCM, `0x59` SRS, `0x5B` IMM, `0x99` AC, `0x11` ECM, `0x13` TCM, `0x31` EPS).
+- Local ID scanner (`21 01` .. `21 FE`) and offline hex packet decoder.
+
+### 5. Hidden Features, BCM Coding & Immobilizer Key Programming (Tab 5)
+- **21 Model-Specific Hidden Features (BCM Coding):**
+  - Read existing BCM state via `21 08` / `21 01` (CAN `0x7E4` / K-Line `0x5A`).
+  - Auto door locking (speed-dependent @ 15 km/h or shift lever P-linked).
+  - Auto door unlock (ignition OFF or shift lever P-linked).
+  - Daytime Running Lights (`DRL`) enable/disable.
+  - Comfort turn signals (lane-change 2, 3, or 4 flashes).
+  - Auto folding mirrors on lock.
+  - Cornering fog lamps.
+  - Factory security alarm activation.
+  - Acoustic buzzer / horn lock answerback.
+  - Guide-me-home & welcome lighting timers.
+  - ESP Dyno / Off-road full deactivation mode.
+- **Immobilizer & Key Programming (`IMMO-01..207`):**
+  - **Safe Read-Only Operations:** Key count & date (`21 A1`), Transponder chip ID (`21 B0`), Direct EEPROM PIN read (`10 C0 -> 21 21`), Keyless interior antenna check.
+  - **4-Digit PIN Operations:** Presets (`0895`, `9502`, `5634`, `0325`), Safe PIN test, Transponder key registration (`30 A1 80` / `A5 A1 80`), Remote fob programming (`A5 A1 20` / `30 62 07`), ECM-Immobilizer sync, Electronic Steering Lock (`ESL`) unlock, and Double-confirmed erase all keys.
+  - **2015+ UDS Seed-Key Routine:** Dynamic seed request (`27 03`) and calculated key unlock (`27 04 -> 31 01 01 0D`).
+
+---
+
+## 🛠️ Hardware Requirements & Tested Interfaces
+
+Compatible with any SAE J2534-1 / J2534-2 compliant PassThru adapter running on 32-bit DLLs:
+- **Drew Technologies:** MongoosePro JLR, MongoosePro Toyota, CarDAQ-Plus
+- **Scanmatik:** SM2 / SM2 Pro (USB & Bluetooth)
+- **Tactrix:** OpenPort 2.0
+- **Allscanner:** VCX SE, VCX Nano
+- **Chipsoft:** J2534 Pro / Lite
+- **Generic:** Any PassThru device registered under Windows `Software\PassThruSupport.04.04`
+
+---
+
+## ⚡ Quick Start
+
+### 1. Running the Pre-Compiled Binary
+1. Connect your J2534 interface to your PC's USB port and the vehicle's OBD-II port.
+2. Turn the vehicle's **Ignition ON** (engine stopped for programming; idling for live data).
+3. Double-click `Suzuki_Diyagnostik_Baslat.bat` (or execute `suzuki_diag_server.exe`).
+4. The web dashboard will automatically open in your browser at `http://127.0.0.1:8080`.
+5. Select your J2534 interface from the dropdown list and click **Connect**.
+
+### 2. Building from Source
+Built with Microsoft Visual C++ (MSVC 2022 / 2019 x86 toolset):
 ```cmd
 build_diag.cmd
 suzuki_diag_server.exe --check-identity
@@ -109,5 +128,5 @@ suzuki_diag_server.exe --check-identity
 
 ---
 
-## Disclaimer
-This project is an independent diagnostic tool developed for standard SAE J2534 PassThru interfaces. It is not affiliated with, sponsored by, or endorsed by Suzuki Motor Corporation. Provided "AS IS" in BETA status.
+## ⚖️ Disclaimer
+This project is an independent diagnostic development for standard SAE J2534 PassThru hardware. It is not affiliated with, sponsored by, or endorsed by Suzuki Motor Corporation. All trademarks and brand names belong to their respective owners. Provided strictly "AS IS" under BETA testing terms.
