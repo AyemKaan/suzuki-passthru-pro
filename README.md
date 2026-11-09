@@ -2,10 +2,10 @@
 
 <div align="center">
 
-![Suzuki OBD Professional Banner](docs/screenshots/service_calibration_screen.png)
+![Suzuki OBD Professional Banner](docs/screenshots/03_service_calibrations.png)
 
 ### Professional Multi-ECU Diagnostic, Calibration, Coding & Key Programming Software for Suzuki Vehicles
-**Zero Dependencies · Native C++ Server · High-Performance Standalone J2534 Stack**
+**Zero External Dependencies · Native C++ Server Engine · Standalone SAE J2534 Stack**
 
 [![Release](https://img.shields.io/badge/Release-v2.28.01--BETA-blue.svg)](https://github.com)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x86%20%2F%20x64)-lightgrey.svg)](https://github.com)
@@ -20,18 +20,44 @@
 > [!WARNING]
 > **BETA RELEASE — HARDWARE VERIFICATION NOTICE**
 > This software is currently in active **BETA** stage. Not 100% of Suzuki models have been physically field-tested yet.
-> - **Physically Hardware-Verified Vehicle:** **Suzuki Grand Vitara 1.9 DDiS (JB419D / F9Q)** (Tested on CAN bus and K-Line Pin 7).
+> - **Physically Hardware-Verified Vehicle:** **Suzuki Grand Vitara 1.9 DDiS (JB419D / F9Q)** (Fully tested on CAN bus and Pin 7 K-Line).
 > - **Other Suzuki Models:** Protocol definitions, ECU target addresses, service calibrations, and BCM coding routines are fully implemented and mapped for experimental/beta testing across CAN (`ISO 15765-4`), K-Line (`ISO 14230-4`), and UDS (`ISO 14229`).
 
 ---
 
-## 📸 Screenshots & Interface
+## 📸 Interface Walkthrough & Screenshots
+
+All 5 core functional modules have been captured directly from the live application running in high-resolution:
 
 <div align="center">
 
-| Service & Calibration Suite (Tab 3) | Diagnostic Scan & Real-Time Monitoring |
-|:---:|:---:|
-| ![Service & Calibration](docs/screenshots/service_calibration_screen.png) | ![Overview](docs/screenshots/overview_screen.png) |
+### Tab 1: System Scan & Multi-ECU DTC Inspection
+*Full vehicle diagnostic scan across Powertrain, ABS/ESP, BCM, Airbag, EPS, IPC, Climate, and Keyless with 1-click HTML report export.*
+![Tab 1: System Scan & DTC](docs/screenshots/01_system_scan_dtc.png)
+
+---
+
+### Tab 2: Live Sensor Telemetry & Road-Test CSV Logger
+*Real-time sensor monitoring (RPM, Rail Pressure, Boost, DPF Soot/Differential Pressure, SAS Angle, Yaw Rate) + timestamped CSV recording.*
+![Tab 2: Live Data Telemetry](docs/screenshots/02_live_data_telemetry.png)
+
+---
+
+### Tab 3: Service, Calibrations & Actuator Tests
+*27 vehicle-filtered quick calibration cards, Injector IMA (Cyl 1–4) coding, 17-digit VIN registration, 631 active tests & 570 utility routines.*
+![Tab 3: Service & Calibrations](docs/screenshots/03_service_calibrations.png)
+
+---
+
+### Tab 4: Direct K-Line Terminal & ECU Identification
+*Direct ISO 14230 Fast Init terminal for Suzuki Pin 7 K-Line controllers (0x29 ABS, 0x21 4WD, 0x5A BCM, 0x59 Airbag, 0x5B IMM, 0x99 AC, 0x11 ECM).*
+![Tab 4: ECU Identity & K-Line Tools](docs/screenshots/04_ecu_kline_tools.png)
+
+---
+
+### Tab 5: Hidden Features (BCM Coding) & Immobilizer Key Programming
+*21 model-specific personalization features + complete Immobilizer transponder chip registration, remote coding, and ESL unlock.*
+![Tab 5: Hidden Features & Immobilizer Coding](docs/screenshots/05_hidden_features_immo.png)
 
 </div>
 
@@ -41,10 +67,8 @@
 
 **Suzuki OBD Professional** is a standalone, high-performance diagnostic suite specifically engineered for Suzuki vehicles using any compliant **SAE J2534 PassThru** interface (MongoosePro JLR/Toyota, Scanmatik 2 Pro, Tactrix OpenPort 2.0, VCX SE, Chipsoft, etc.).
 
-Unlike bloated generic OBD tools, this suite contains comprehensive native protocol definitions, local identifier (Service `21`/`22`) mappings, OEM adaptation utilities, BCM personalized hidden feature coding, and transponder key programming routines.
-
-- **Standalone Native Core:** Compiled into a single 32-bit Windows executable (`suzuki_diag_server.exe`) with zero runtime dependencies.
-- **Embedded Web UI:** Responsive, single-screen responsive interface (`index.html`) with English set as permanent default and instant one-click Turkish localization.
+- **Standalone Native Core:** Compiled into a single 32-bit Windows executable (`suzuki_diag_server.exe`) with zero external runtime dependencies.
+- **Embedded Web Dashboard:** Responsive single-screen interface (`index.html`) with English set as permanent default and instant one-click Turkish localization.
 - **Multi-Protocol Engine:** Synchronous support for **CAN (500 kbps)**, **K-Line Pin 7 (ISO 14230-4 Fast Init @ 10,400 baud)**, and **UDS (ISO 14229)** with automatic bus arbitration and fallback.
 
 ---
