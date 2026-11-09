@@ -1,4 +1,4 @@
-# Binaries & Compiler artifacts
+﻿# Binaries & Compiler artifacts
 *.exe
 *.obj
 *.pdb
@@ -7,6 +7,13 @@
 *.suo
 *.user
 .vs/
+dist/
+temp_cdp_profile/
+
+# Source Code Protection (Keep closed-source on GitHub)
+suzuki_diag_server.cpp
+suzuki_*.h
+build_diag.cmd
 
 # Databases & Decrypted OEM Assets
 *.db
@@ -48,9 +55,15 @@ find_text.ps1
 find_*.py
 export_asasm.js
 export_*.py
+capture_tabs.js
+
+# Dependencies
+node_modules/
+package-lock.json
+package.json
+
+# Other non-repo scratch files
+build_desktop.cmd
+suzuki_desktop.cpp
 check_db.py
 query_obd_db.py
-build_desktop.cmd
-suzuki_desktop_app.cpp
-
-suzuki_desktop.cpp
