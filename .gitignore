@@ -1,0 +1,56 @@
+# Binaries & Compiler artifacts
+*.exe
+*.obj
+*.pdb
+*.idb
+*.ilk
+*.suo
+*.user
+.vs/
+
+# Databases & Decrypted OEM Assets
+*.db
+*.decrypted.db
+*.sqlite
+*.sqlite3
+raw_data/
+temp/
+logs/
+*.log
+
+# OEM Installer & Decompiled Proprietary Assets
+Extracted/
+decompiled_scripts/
+compatibility/
+Readme.txt
+*.bin
+dump_key.cpp
+
+# Reversing & Inspection Scratch Scripts
+dump_*.js
+inspect_*.js
+find_*.js
+patch_*.js
+read_*.js
+test_*.js
+test_*.cpp
+scan_*.cpp
+restore_and_hook.js
+simulate_client_startup.js
+disasm_*.js
+apply_obd_fix.js
+build_full_hook.js*
+make_hook.js
+print_*.js
+update_all_j2534.js
+search_*.js
+find_text.ps1
+find_*.py
+export_asasm.js
+export_*.py
+check_db.py
+query_obd_db.py
+build_desktop.cmd
+suzuki_desktop_app.cpp
+
+suzuki_desktop.cpp

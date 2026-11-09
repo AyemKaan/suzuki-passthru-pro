@@ -1,0 +1,1663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Suzuki OBD Professional · J2534 Diagnostic Suite (Beta)</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;max-width:100vw;height:100%;overflow-x:hidden;background:#cbd5e1;color:#0f172a;font:12px/1.35 "Segoe UI",Tahoma,Arial,sans-serif;user-select:none}
+button,select,input{font:inherit;font-size:11.5px;color:#0f172a;background:#ffffff;border:1px solid #94a3b8;border-radius:3px;padding:2px 7px;height:25px;max-width:100%;min-width:0}
+input:focus,select:focus{outline:1px solid #2563eb;border-color:#1d4ed8}
+button{background:linear-gradient(180deg,#ffffff 0%,#e2e8f0 100%);font-weight:600;cursor:pointer;white-space:nowrap}
+button:hover:not(:disabled){background:linear-gradient(180deg,#ffffff 0%,#cbd5e1 100%);border-color:#475569}
+button:active:not(:disabled){background:#cbd5e1}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.primary{background:linear-gradient(180deg,#1d4ed8 0%,#1e3a8a 100%);color:#ffffff;border-color:#172554}
+button.primary:hover:not(:disabled){background:linear-gradient(180deg,#2563eb 0%,#1d4ed8 100%)}
+button.danger{background:linear-gradient(180deg,#b91c1c 0%,#7f1d1d 100%);color:#ffffff;border-color:#450a0a}
+button.danger:hover:not(:disabled){background:linear-gradient(180deg,#dc2626 0%,#991b1b 100%)}
+.app{display:flex;flex-direction:column;width:100%;max-width:100vw;height:100vh;overflow:hidden}
+.topbar{background:#0f172a;color:#f8fafc;padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:2px solid #020617;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;letter-spacing:.2px;flex-wrap:wrap}
+.brand-badge{background:#dc2626;color:#fff;padding:1px 6px;font-size:10.5px;font-weight:700;border-radius:2px}
+.toolbar-group{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-width:0}
+.toolbar-group label{font-size:11px;color:#cbd5e1;font-weight:600}
+.action-bar .toolbar-group label{color:#1e293b}
+.topbar .toolbar-group select{width:175px;height:24px;background:#1e293b;color:#f8fafc;border-color:#475569}
+.status-strip{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.stat-box{background:#1e293b;border:1px solid #334155;padding:2px 6px;border-radius:3px;font-size:11px;display:flex;align-items:center;gap:5px}
+.stat-box strong{font-family:Consolas,monospace;font-size:11.5px;color:#fff}
+.led{width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block}
+.led.on{background:#22c55e;box-shadow:0 0 4px #22c55e}
+.dll-bar{background:#e2e8f0;padding:4px 8px;border-bottom:1px solid #94a3b8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dll-bar[hidden]{display:none!important}
+.dll-bar input{flex:1;min-width:160px;max-width:440px}
+.tabs{background:#cbd5e1;padding:4px 8px 0;display:flex;gap:3px;border-bottom:1px solid #64748b;flex-wrap:wrap}
+.tabs button{height:25px;padding:0 10px;border:1px solid #64748b;border-bottom:none;border-radius:3px 3px 0 0;background:#dde3ea;color:#334155;font-weight:600;font-size:11.5px}
+.tabs button[aria-selected="true"]{background:#f1f5f9;color:#0f172a;border-top:2px solid #1d4ed8;position:relative;top:1px}
+.workspace{flex:1;width:100%;max-width:100%;min-height:0;background:#f1f5f9;padding:6px 8px;overflow:hidden;display:flex;flex-direction:column;gap:5px}
+.view[hidden]{display:none!important}
+.view{display:flex;flex-direction:column;gap:5px;width:100%;max-width:100%;flex:1;height:100%;min-height:0;min-width:0;overflow:hidden}
+.action-bar{background:#e2e8f0;border:1px solid #94a3b8;border-radius:3px;padding:3px 7px;display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;min-width:0;flex-shrink:0}
+.service-tools-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:6px;width:100%;min-width:0;flex-shrink:0}
+.tool-card{background:#e2e8f0;border:1px solid #94a3b8;border-radius:3px;padding:3px 7px;display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;min-width:0}
+.tool-card-head{font-weight:700;font-size:11px;color:#0f172a;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.split{display:grid;grid-template-columns:1.15fr 1fr;gap:6px;flex:1;min-height:0;min-width:0;width:100%;overflow:hidden}
+.pane{background:#ffffff;border:1px solid #94a3b8;border-radius:3px;display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;overflow:hidden}
+.pane-tall{min-height:0;height:100%}
+.pane-head{background:#1e293b;color:#ffffff;padding:4px 8px;font-weight:600;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.pane-body,.table-wrap{flex:1;min-width:0;overflow-x:auto;overflow-y:auto}
+table{width:100%;max-width:100%;border-collapse:collapse;font-size:11.5px;user-select:text;table-layout:fixed}
+th,td{padding:4px 6px;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;text-align:left;vertical-align:middle;line-height:1.28;overflow-wrap:anywhere;word-break:break-word}
+th{background:#e2e8f0;color:#0f172a;font-weight:700;font-size:11px;position:sticky;top:0;z-index:1;border-bottom:1px solid #94a3b8}
+tr:nth-child(even) td{background:#f8fafc}
+tr:hover td{background:#e0f2fe}
+.mono{font-family:Consolas,"Courier New",monospace}
+.tag-ok{color:#15803d;font-weight:700}
+.tag-fault{color:#b91c1c;font-weight:700}
+.tag-none{color:#64748b}
+.val-cell{font-family:Consolas,monospace;font-size:12px;font-weight:700;color:#0f172a;text-align:right}
+.log-box{background:#0f172a;color:#e2e8f0;font-family:Consolas,monospace;font-size:11px;line-height:1.35;padding:6px;margin:0;flex:1;min-width:0;min-height:105px;overflow:auto;white-space:pre-wrap;word-break:break-word;user-select:text}
+.kline-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:6px;border-bottom:1px solid #cbd5e1;background:#f8fafc}
+.kline-grid button{height:26px;text-align:left;padding:0 6px;overflow:hidden;text-overflow:ellipsis}
+.immo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+.immo-grid button{height:25px;text-align:left;padding:2px 6px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.statusbar{background:#0f172a;color:#cbd5e1;border-top:1px solid #020617;padding:3px 10px;font-size:11px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+@media(max-width:1024px){.split,.service-tools-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-badge">SUZUKI</span>
+      <span>OBD Professional / J2534 Diagnostic Suite</span>
+      <span style="background:#eab308;color:#0f172a;padding:1px 6px;border-radius:2px;font-size:10px;font-weight:700">BETA</span>
+      <span style="font-size:11px;color:#94a3b8;margin-left:4px">(Verified: Grand Vitara 1.9 DDiS · Other models experimental)</span>
+    </div>
+    <div class="toolbar-group">
+      <label for="deviceSelect" data-i="vciLabel">J2534 Interface:</label>
+      <select id="deviceSelect"></select>
+      <button id="connect" class="primary" data-i="connect">Connect</button>
+      <button id="refresh" data-i="refresh">Refresh</button>
+      <button id="toggleDll" data-i="customDllBtn">DLL...</button>
+    </div>
+    <div class="toolbar-group">
+      <label for="profileSelect" data-i="profileLabel">Vehicle Profile:</label>
+      <select id="profileSelect"></select>
+      <button id="detect" class="primary" data-i="detect">Auto Detect</button>
+    </div>
+    <div class="status-strip">
+      <div class="stat-box"><span id="connLed" class="led"></span><strong id="connection">--</strong></div>
+      <div class="stat-box"><span>KL30:</span><strong id="voltage">-- V</strong></div>
+      <select id="language" style="min-width:64px;height:24px;background:#0f172a;color:#fff;border-color:#475569">
+        <option value="en">English (EN)</option>
+        <option value="tr">Türkçe (TR)</option>
+      </select>
+    </div>
+  </header>
+
+  <div id="dllBar" class="dll-bar" hidden>
+    <label for="customDll" data-i="dllPath">Özel J2534 DLL Yolu:</label>
+    <input id="customDll" type="text" placeholder="C:\Program Files (x86)\...\driver.dll">
+    <button id="customConnect" class="primary" data-i="loadDll">DLL Yükle</button>
+  </div>
+
+  <div id="identityPanel" class="dll-bar" hidden><span id="identitySummary"></span><select id="identityCandidates" aria-label="ECU candidates"></select><button id="chooseCandidate">Adayı incelemek için seç / Select candidate for review</button><select id="modelCandidates" aria-label="Model candidates"></select><input id="modelFilter" placeholder="Motor / şanzıman / pazar · Engine / transmission / market"><pre id="modelDetails" hidden></pre></div>
+  <nav class="tabs" aria-label="Modules">
+    <button data-tab="diagnostics" aria-selected="true" data-i="tabDiag">1. System Scan & DTC</button>
+    <button data-tab="live" aria-selected="false" data-i="tabLive">2. Live Data (Data List)</button>
+    <button data-tab="services" aria-selected="false" data-i="tabService">3. Service & Calibration</button>
+    <button data-tab="advanced" aria-selected="false" data-i="tabAdv">4. ECU ID & K-Line</button>
+    <button data-tab="coding" aria-selected="false" data-i="tabCoding">5. Hidden Features & Coding</button>
+  </nav>
+
+  <main class="workspace">
+    <!-- TAB 1: SYSTEM SCAN & DTC -->
+    <section id="diagnostics" class="view">
+      <div class="action-bar">
+        <div class="toolbar-group">
+          <button id="scan" class="primary" data-i="scanBtn">Scan All Control Units</button>
+          <button id="quickClear" class="danger" data-i="clearBtn">Clear All Trouble Codes (DTC Clear)</button>
+          <button id="readFreezeFrame" data-i="ffBtn">Read Freeze-Frame (12 / 19 04 / 21 87)</button>
+          <button id="exportReportBtn" data-i="exportReportBtn">Export Diagnostic Report (.html)</button>
+        </div>
+        <span id="profileDescription" style="font-size:11px;color:#334155;font-weight:600"></span>
+      </div>
+      <div class="split">
+        <div class="pane">
+          <div class="pane-head"><span data-i="ecuListTitle">Control Units (ECU List)</span><span id="ecuCountBadge"></span></div>
+          <div class="pane-body">
+            <table>
+              <thead><tr><th style="width:90px" data-i="colModule">Module</th><th data-i="colSystem">System</th><th style="width:170px" data-i="colAddr">Protocol / Address</th><th style="width:160px" data-i="colStatus">Status</th><th style="width:60px" data-i="colDtc">DTC</th></tr></thead>
+              <tbody id="modules"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-head"><span data-i="dtcListTitle">Trouble Codes (DTC)</span><span id="dtcCountBadge"></span></div><div class="action-bar"><input id="dtcVariant" placeholder="ECU variant ID" aria-label="ECU variant ID"><input id="dtcReferenceCode" placeholder="P0409" aria-label="DTC code"><button id="dtcReferenceRead">Lookup DTC Description</button></div><pre id="dtcReferenceOutput" hidden></pre>
+          <div class="pane-body">
+            <table>
+              <thead><tr><th style="width:80px" data-i="colCode">Code</th><th style="width:80px" data-i="colModule">Module</th><th data-i="colDesc">Fault Description</th><th data-i="colRef">Service Check Point</th></tr></thead>
+              <tbody id="dtcs"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: LIVE DATA -->
+    <section id="live" class="view" hidden>
+      <div class="action-bar">
+        <div class="toolbar-group">
+          <button id="liveToggle" class="primary" data-i="startLive">Start Live Data</button>
+          <button id="csvRecordBtn" data-i="csvRecordStart">Record CSV Log</button>
+          <button id="csvDownloadBtn" disabled>Download CSV (0)</button>
+          <span id="liveStatus" style="font-size:12px;font-weight:600;color:#1e293b"></span>
+        </div>
+        <div class="toolbar-group">
+          <label for="dbPage" data-i="dbPageLabel">Page:</label>
+          <input id="dbPage" type="number" min="0" max="999" value="0" style="width:64px">
+          <button id="dbLiveRead" data-i="dbReadBtn">Read DB Page</button>
+          <span id="dbLiveStatus" style="font-size:11px;color:#334155"></span>
+        </div>
+      </div>
+      <div class="split">
+        <div class="pane">
+          <div class="pane-head"><span data-i="liveTableTitle">Live Sensor Values (Engine & ABS/ESP)</span></div>
+          <div class="pane-body">
+            <table>
+              <thead><tr><th data-i="colParam">Parameter</th><th style="width:130px;text-align:right" data-i="colValue">Value</th><th style="width:70px" data-i="colUnit">Unit</th><th style="width:120px" data-i="colSource">Source</th></tr></thead>
+              <tbody id="metrics"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-head"><span data-i="dbTableTitle">Extended ECU Parameters (Service 21 / 22)</span></div>
+          <div class="pane-body">
+            <table>
+              <thead><tr><th style="width:70px">ID</th><th data-i="colParam">Parameter</th><th style="width:120px;text-align:right" data-i="colValue">Value</th><th style="width:70px" data-i="colUnit">Unit</th></tr></thead>
+              <tbody id="dbMetrics"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: SERVICE & CALIBRATION -->
+    <section id="services" class="view" hidden>
+      <div class="service-tools-grid">
+        <div class="tool-card">
+          <div class="tool-card-head"><span data-i="imaBarTitle">Injector IMA Coding (Cyl 1–4):</span><span class="mono" style="font-size:11px;color:#475569">DSL-01 / DSL-05 / DSL-15</span></div>
+          <div class="toolbar-group">
+            <input id="imaCyl1" class="mono" maxlength="9" placeholder="Cyl 1 (7ch)" style="width:86px;text-transform:uppercase">
+            <input id="imaCyl2" class="mono" maxlength="9" placeholder="Cyl 2 (7ch)" style="width:86px;text-transform:uppercase">
+            <input id="imaCyl3" class="mono" maxlength="9" placeholder="Cyl 3 (7ch)" style="width:86px;text-transform:uppercase">
+            <input id="imaCyl4" class="mono" maxlength="9" placeholder="Cyl 4 (7ch)" style="width:86px;text-transform:uppercase">
+            <button id="imaReadBtn" data-i="imaReadBtn">Read IMA (21 AD / 21 54)</button>
+            <button id="imaWriteBtn" class="primary" data-i="imaWriteBtn">Write IMA & ZFC Reset (3B AD)</button>
+          </div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-head"><span data-i="vinBarTitle">VIN (17-Ch):</span><span class="mono" style="font-size:11px;color:#475569">PWTR-02 / UDS F1 90</span></div>
+          <div class="toolbar-group">
+            <input id="vinInput" class="mono" maxlength="17" placeholder="JSAJTDA4V00123456" style="flex:1;min-width:185px;text-transform:uppercase">
+            <button id="vinReadBtn" data-i="vinReadBtn">Read VIN (1A 90 / 22 F1 90)</button>
+            <button id="vinWriteBtn" class="primary" data-i="vinWriteBtn">Write VIN (3B 90 / 2E F1 90)</button>
+          </div>
+        </div>
+      </div>
+      <div class="split">
+        <div class="pane">
+          <div class="pane-head">
+            <span data-i="serviceTableTitle">Special Service & Calibration Functions (Utility)</span>
+            <label style="display:flex;align-items:center;gap:6px;font-weight:normal;font-size:11px;cursor:pointer">
+              <input type="checkbox" id="filterServiceByVehicle" checked style="width:auto;min-height:auto">
+              <span id="serviceFilterBadge">Filter by Model</span>
+            </label>
+          </div>
+          <div class="pane-body">
+            <table>
+              <thead><tr><th style="width:110px">Code</th><th data-i="colFunc">Function</th><th data-i="colCond">Precondition</th><th style="width:130px" data-i="colAction">Action</th></tr></thead>
+              <tbody id="serviceRows">
+                <tr data-profiles="auto,gv_jb419d,gv_petrol,suzuki_can,suzuki_kline">
+                  <td class="mono">ABS-03 / VDC</td>
+                  <td><strong data-i="sas">ABS / ESP Direksiyon Açısı (SAS) & G-Sensör Kalibrasyonu</strong></td>
+                  <td data-i="sasCond">Araç düz zeminde, direksiyon tam düz, fren bırakılmış, kontak AÇIK</td>
+                  <td><button data-service="sas" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d">
+                  <td class="mono">DSL-02</td>
+                  <td><strong data-i="egr">EGR Valfi Bilgisi Başlatılıyor (EGR Adaptasyon Sıfırlama)</strong></td>
+                  <td data-i="egrCond">Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 21 64 -> 3B 64)</td>
+                  <td><button data-service="egr" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d">
+                  <td class="mono">DSL-03</td>
+                  <td><strong data-i="throttle">Giriş Kelebek Valfi (Boğaz Kelebeği) Bilgisi Başlatılıyor</strong></td>
+                  <td data-i="throttleCond">Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 2E 2F 1D..21)</td>
+                  <td><button data-service="throttle" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d">
+                  <td class="mono">DSL-01</td>
+                  <td><strong data-i="injector">Enjektör Kalibrasyon Kodu (IMA) Okuma & ZFC Sıfırlama</strong></td>
+                  <td data-i="injectorCond">Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 21 AD & 3B 7E FE)</td>
+                  <td><button data-service="injector" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d">
+                  <td class="mono">DSL-04</td>
+                  <td><strong data-i="dpf">Dizel PF (DPF) Bilgisi Başlatılıyor / Kurum Sıfırlama</strong></td>
+                  <td data-i="dpfCond">Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 31 0A 00)</td>
+                  <td><button data-service="dpf" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d">
+                  <td class="mono">DSL-06</td>
+                  <td><strong data-i="dpf_regen">DPF Servis Rejenerasyonu & FAP Veri Güncelleme</strong></td>
+                  <td data-i="dpfRegenCond">Motor çalışma sıcaklığında, rölantide (0x7E0 F9Q 31 0D 00)</td>
+                  <td><button data-service="dpf_regen" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d">
+                  <td class="mono">DSL-08</td>
+                  <td><strong data-i="oil">Motor Yağ Değişim Işığını & Seyreltim Sayacını Resetleme</strong></td>
+                  <td data-i="oilCond">Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 21 6A -> 3B 6A)</td>
+                  <td><button data-service="oil" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d">
+                  <td class="mono">DSL-10</td>
+                  <td><strong data-i="rail_test">Yüksek Basınç (Common Rail) Sızdırmazlık Testi</strong></td>
+                  <td data-i="railTestCond">Motor sıcak, rölantide çalışıyor (0x7E0 F9Q 3B 62 -> 31 62 00)</td>
+                  <td><button data-service="rail_test" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d">
+                  <td class="mono">DSL-05</td>
+                  <td><strong data-i="f9q_ecm_replace">ECM Değişimi / Enjektör & EGR & DPF Hafıza Transferi (F9Q)</strong></td>
+                  <td data-i="f9qEcmCond">Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 21 AD/64/7E/AC -> 2E/3B)</td>
+                  <td><button data-service="f9q_ecm_replace" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d">
+                  <td class="mono">DSL-11</td>
+                  <td><strong data-i="f9q_starter_test">Marş Motoru / Montaj Kontrol Testi (F9Q)</strong></td>
+                  <td data-i="f9qStarterCond">Kontak AÇIK (0x7E0 F9Q 31 61 00 -> 21 61 -> 31 61 01)</td>
+                  <td><button data-service="f9q_starter_test" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,suzuki_can">
+                  <td class="mono">DSL-16</td>
+                  <td><strong data-i="can_dpf_regen">CAN Dizel DPF Servis Rejenerasyonu (D13A / D16AA / D20AA)</strong></td>
+                  <td data-i="canDpfRegenCond">Motor sıcak, rölantide (0x7E0 30 72 08 80 80 00 00)</td>
+                  <td><button data-service="can_dpf_regen" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,suzuki_can">
+                  <td class="mono">DSL-22</td>
+                  <td><strong data-i="can_oil_reset">CAN Dizel Yağ Değişim & Seyreltim Sıfırlama (30 74 08 02)</strong></td>
+                  <td data-i="canOilCond">Kontak AÇIK, motor çalışmıyor (0x7E0 30 74 08 02 02 00 00)</td>
+                  <td><button data-service="can_oil_reset" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,suzuki_can">
+                  <td class="mono">DSL-39</td>
+                  <td><strong data-i="can_egr_learn">CAN Dizel EGR Valfi Öğrenme Değerini Sıfırlama (30 70 08 08)</strong></td>
+                  <td data-i="canEgrCond">Kontak AÇIK, motor çalışmıyor (0x7E0 30 70 08 08 08 00 00)</td>
+                  <td><button data-service="can_egr_learn" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,suzuki_can">
+                  <td class="mono">DSL-17..24</td>
+                  <td><strong data-i="can_diesel_sensors">CAN Dizel Sensör & Parça Değişim Sıfırlama (Fark Basınç / DPF / MAF / A-F / PRV / Rail)</strong></td>
+                  <td data-i="canSensorsCond">Kontak AÇIK, motor çalışmıyor (0x7E0 30 74 08 .. / 30 78 08 80)</td>
+                  <td><button data-service="can_diesel_sensors" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_petrol,suzuki_can,suzuki_kline">
+                  <td class="mono">ECM-122/101</td>
+                  <td><strong data-i="petrol_ecm">Benzinli ECM Gaz Kelebeği, Rölanti (IAC), Yakıt Trim, Fren Strok & GPF Öğrenme</strong></td>
+                  <td data-i="petrolEcmCond">Kontak AÇIK, motor çalışmıyor (30 04 00 / 31 03 00 / 31 06 00 / 31 01 C0)</td>
+                  <td><button data-service="petrol_ecm" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_petrol,suzuki_can,suzuki_kline">
+                  <td class="mono">AT / AMT / CVT</td>
+                  <td><strong data-i="tcm">Şanzıman (TCM) Nötr Konum, Debriyaj (AMT) & CVT Öğrenme Sıfırlama</strong></td>
+                  <td data-i="tcmCond">Kontak AÇIK, vites N/P konumunda (0x7E1 30 60 / 30 77 / 30 00 / 31 01 C1)</td>
+                  <td><button data-service="tcm" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,suzuki_can,suzuki_kline">
+                  <td class="mono">EPS-01</td>
+                  <td><strong data-i="eps">EPS Elektrikli Direksiyon Tork / Açı Sıfır Noktası Kalibrasyonu</strong></td>
+                  <td data-i="epsCond">Direksiyon tam düz, araç sabit (0x742 30 11 08 80 80 00 00)</td>
+                  <td><button data-service="eps" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d,gv_petrol,suzuki_can,suzuki_kline">
+                  <td class="mono">ABS-01 / 04</td>
+                  <td><strong data-i="abs_bleed">ABS Hidrolik Fren Hava Alma (Air Bleeding) & ESP Fonksiyon Testi</strong></td>
+                  <td data-i="absBleedCond">Kontak AÇIK, araç sabit (0x740 / K-Line 30 00 07 01 / 30 80 07 04)</td>
+                  <td><button data-service="abs_bleed" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d,gv_petrol,suzuki_can,suzuki_kline">
+                  <td class="mono">BCM-01</td>
+                  <td><strong data-i="bcm_airbag">BCM Hava Yastığı (Airbag) Çarpışma Kaydı / Darbe Geçmişi Silme</strong></td>
+                  <td data-i="bcmAirbagCond">Kontak AÇIK (0x745 30 07 08 08 00 / K-Line A5 07 08 00)</td>
+                  <td><button data-service="bcm_airbag" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d,gv_petrol,suzuki_can,suzuki_kline">
+                  <td class="mono">TPMS-01</td>
+                  <td><strong data-i="tpms">TPMS Lastik Basınç Sensörü ID Kayıt Modu Başlatma</strong></td>
+                  <td data-i="tpmsCond">Kontak AÇIK (0x745 BCM 30 08 07 80 / 30 25 07 80)</td>
+                  <td><button data-service="tpms" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d,gv_petrol,suzuki_can">
+                  <td class="mono">IPC-03</td>
+                  <td><strong data-i="ipc">Gösterge Paneli (IPC / Kombine Metre) Bakım / Yağ İkaz Sıfırlama</strong></td>
+                  <td data-i="ipcCond">Kontak AÇIK (0x7C0 IPC 30 35 08 80 00 00 00)</td>
+                  <td><button data-service="ipc" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d,gv_petrol,suzuki_can">
+                  <td class="mono">ALC-01</td>
+                  <td><strong data-i="alc">Otomatik Far Seviyeleme (ALC) Sensör Başlatma / Sıfırlama</strong></td>
+                  <td data-i="alcCond">Araç düz zeminde, yüksüz, kontak AÇIK (0x746 30 00 08 80 80 00 00)</td>
+                  <td><button data-service="alc" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,suzuki_can">
+                  <td class="mono">EPB-01</td>
+                  <td><strong data-i="epb">EPB Elektronik Park Freni Balata Değişim (Servis) Modu & Kalibrasyon</strong></td>
+                  <td data-i="epbCond">Araç düz zeminde, kontak AÇIK (EPB 0x740 / K-Line A6 00 -> 30 01 07 -> 31 01 02)</td>
+                  <td><button data-service="epb" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d,gv_petrol,suzuki_can,suzuki_kline">
+                  <td class="mono">HVAC-01</td>
+                  <td><strong data-i="hvac">Klima (HVAC) Hava Karışım Klepesi (Air Mix Flap) & Kompresör Başlatma</strong></td>
+                  <td data-i="hvacCond">Kontak AÇIK (0x7A2 CAN / 0x99 K-Line 30 01 08 80 80 -> 31 01 00)</td>
+                  <td><button data-service="hvac" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,suzuki_can">
+                  <td class="mono">HVBMU-01</td>
+                  <td><strong data-i="shvs_hybrid">SHVS Mild-Hybrid / Strong Hybrid (ISG / Li-Ion Batarya BMU) Sıfırlama</strong></td>
+                  <td data-i="shvsCond">Kontak AÇIK, Ready OFF (30 01 07 80 80 / 31 01 C0 10)</td>
+                  <td><button data-service="shvs_hybrid" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,suzuki_can">
+                  <td class="mono">ADAS-01</td>
+                  <td><strong data-i="adas_calib">ADAS Ön Kamera / Radar / Kör Nokta (BSM) & 360 AVM Kalibrasyon Başlatma</strong></td>
+                  <td data-i="adasCond">Araç düz zeminde, hedef/kalibrasyon koşulu hazır, kontak AÇIK (31 01 C0 01)</td>
+                  <td><button data-service="adas_calib" class="primary" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+                <tr data-profiles="auto,gv_jb419d,gv_petrol,suzuki_can,suzuki_kline">
+                  <td class="mono">DTC-CLR</td>
+                  <td><strong data-i="clear">Tüm Kontrol Ünitelerinde Arıza Kodlarını Temizle</strong></td>
+                  <td data-i="clearCond">Kontak AÇIK, motor çalışmıyor (14 FF FF FF / 14 FF 00 / 14 40 00)</td>
+                  <td><button data-service="clear" class="danger" style="width:100%" data-i="runBtn">Başlat</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-head"><span data-i="serviceLogTitle">Procedure & ECU Response Log</span></div>
+          <pre id="serviceLog" class="log-box">--</pre>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <div class="toolbar-group">
+          <strong data-i="dbCatalogFilterTitle">Suzuki OBD Active Tests (631) & Service Functions (570) Catalog:</strong>
+          <select id="dbCatalogBase" style="min-width:190px">
+            <option value="0" data-i="allBasesOpt">All ECU Systems (All Bases)</option>
+            <option value="41">Base 41 · CAN Engine (ECM 0x7E0)</option>
+            <option value="93">Base 93 · F9Q 1.9 DDiS (ECM 0x7E0)</option>
+            <option value="194">Base 194 · UDS Engine (ECM 0x7E0)</option>
+            <option value="64">Base 64 · K-Line Engine (ECM 0x11)</option>
+            <option value="101">Base 101 · F9Q K-Line Engine (ECM 0x7A)</option>
+            <option value="98">Base 98 · D19AA/D20AA K-Line Engine (0x10)</option>
+            <option value="34">Base 34 · CAN ABS / ESP (0x261)</option>
+            <option value="58">Base 58 · K-Line ABS / ESP (0x29)</option>
+            <option value="185">Base 185 · UDS ABS / ESP (0x770)</option>
+            <option value="49">Base 49 · CAN Auto Trans / TCM (0x7E1)</option>
+            <option value="75">Base 75 · K-Line Auto Trans / TCM (0x19)</option>
+            <option value="147">Base 147 · UDS Auto Trans / TCM (0x7E1)</option>
+            <option value="39">Base 39 · CAN Body Control / BCM (0x271)</option>
+            <option value="63">Base 63 · K-Line Body Control / BCM (0x5A)</option>
+            <option value="47">Base 47 · CAN Instrument Cluster / IPC (0x274)</option>
+            <option value="197">Base 197 · UDS Instrument Cluster / IPC (0x795)</option>
+            <option value="42">Base 42 · CAN Power Steering / EPS (0x263)</option>
+            <option value="67">Base 67 · K-Line Power Steering / EPS (0x31)</option>
+            <option value="35">Base 35 · CAN Climate / HVAC (0x272)</option>
+            <option value="59">Base 59 · K-Line Climate / HVAC (0x99)</option>
+            <option value="37">Base 37 · CAN Airbag / SRS (0x273)</option>
+            <option value="61">Base 61 · K-Line Airbag / SRS (0x59)</option>
+            <option value="90">Base 90 · UDS Airbag / SRS (0x793)</option>
+            <option value="33">Base 33 · CAN 4WD Transfer (0x262)</option>
+            <option value="56">Base 56 · K-Line 4WD Transfer (0x21)</option>
+            <option value="46">Base 46 · CAN Keyless / Immobilizer (0x275)</option>
+            <option value="70">Base 70 · K-Line Immobilizer (0x5D)</option>
+            <option value="92">Base 92 · CAN TPMS Tire Pressure (0x798)</option>
+            <option value="76">Base 76 · K-Line TPMS Tire Pressure (0x5C)</option>
+          </select>
+          <input id="dbCatalogSearch" placeholder="Search test or utility (e.g. EGR, Fan, Relay, Injector, DPF, Fuel)..." style="min-width:240px">
+          <button id="dbCatalogLoad" class="primary" data-i="dbCatalogLoadBtn">Filter / Load Catalog</button>
+          <span id="dbCatalogCount" class="mono">--</span>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="pane">
+          <div class="pane-head"><span data-i="activeTestTableTitle">Suzuki OBD Active Tests (Actuator Test · 631 Tests · Service 0x30 / 0x2F)</span></div>
+          <div class="pane-body">
+            <table>
+              <thead><tr><th data-i="colActName">Actuator / Test Name</th><th style="width:76px">Base ID</th><th style="width:155px">ON / EXIT Hex</th><th style="width:165px" data-i="colControl">Control</th></tr></thead>
+              <tbody id="activeTestRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-head"><span data-i="dbUtilityTableTitle">Suzuki OBD Service Functions (570 Utilities · Direct ECU Execution)</span></div>
+          <div class="pane-body">
+            <table>
+              <thead><tr><th style="width:82px" data-i="colCode">Code</th><th data-i="colFunc">Function Title</th><th style="width:76px">Base ID</th><th style="width:155px">Hex Command</th><th style="width:88px" data-i="colAction">Action</th></tr></thead>
+              <tbody id="dbUtilityRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ECU IDENTITY & K-LINE -->
+    <section id="advanced" class="view" hidden>
+      <div class="action-bar">
+        <div class="toolbar-group">
+          <strong>Kayıtlı veri / Offline capture:</strong>
+          <input id="captureParam" placeholder="Param ID (1330)" style="width:130px">
+          <input id="captureFields" placeholder="1123=01;1125=02" style="width:210px">
+          <button id="captureCompute">Hesapla / Compute</button>
+        </div>
+        <div class="toolbar-group">
+          <input id="captureDtc" placeholder="5902FF01020308" style="width:170px">
+          <button id="captureDtcDecode">UDS DTC çöz / Decode</button>
+          <input id="captureFreezeFrame" placeholder="5904040900290101..." style="width:190px">
+          <button id="captureFfDecode">Freeze-Frame çöz / Decode</button>
+        </div>
+      </div>
+      <pre id="captureResult" class="log-box" style="min-height:64px;max-height:110px;border-radius:3px">Yalnız kayıtlı veri; ECU sorgusu göndermez. / Offline only; no ECU requests.</pre>
+      <div class="split">
+        <div class="pane">
+          <div class="pane-head"><span>K-Line Doğrudan Erişim (ISO14230 Fast Init · Pin 7 · 10400 baud)</span></div>
+          <div id="klineButtons" class="kline-grid"></div>
+          <pre id="klineOutput" class="log-box">--</pre>
+        </div>
+        <div class="pane">
+          <div class="pane-head"><span data-i="ecuToolsTitle">ECM Kimlik (21 80 / 1A 8E) & Local ID Okuma</span></div>
+          <div class="action-bar" style="border:none;border-bottom:1px solid #94a3b8">
+            <div class="toolbar-group">
+              <button id="ident" class="primary" data-i="ident">ECM Kimliğini Oku</button>
+              <button id="discover" data-i="discover">Local ID Tara (21 01..FE)</button>
+              <button id="rawToggle" data-i="startRaw" disabled>Ham Akışı Başlat</button>
+            </div>
+          </div>
+          <pre id="rawOutput" class="log-box">--</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: HIDDEN FEATURES & BCM CODING -->
+    <section id="coding" class="view" hidden>
+      <div class="action-bar">
+        <div class="toolbar-group">
+          <button id="readCodingBtn" class="primary" data-i="readCodingBtn">Read Current Vehicle Coding (21 08 / 21 01)</button>
+          <label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer;background:#e2e8f0;padding:4px 8px;border:1px solid #94a3b8">
+            <input type="checkbox" id="filterCodingByVehicle" checked>
+            <span id="codingFilterBadge">Filter by Model</span>
+          </label>
+        </div>
+        <span id="codingReadStatus" class="mono" style="font-size:11px;color:#475569">BCM: 0x7E4 (CAN) / 0x5A (K-Line Pin 7) · UDS 0x745</span>
+      </div>
+      <div class="split">
+        <div class="pane pane-tall">
+          <div class="pane-head">
+            <span data-i="codingTableTitle">Model-by-Model Hidden Features & BCM Personalization (21 Functions)</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:17%" data-i="colCode">Code</th>
+                  <th style="width:31%" data-i="colFeature">Hidden Feature / Function</th>
+                  <th style="width:20%" data-i="colModels">Supported Models / Protocol</th>
+                  <th style="width:21%" data-i="colSetting">Target Setting</th>
+                  <th style="width:11%" data-i="colAction">Action</th>
+                </tr>
+              </thead>
+              <tbody id="codingRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="pane pane-tall">
+          <div class="pane-head"><span data-i="immoPanelTitle">Immobilizer, Transponder & Keyless Key Programming (IMMO-01..207)</span></div>
+          <div style="padding:7px 8px;background:#f8fafc;border-bottom:1px solid #94a3b8;display:flex;flex-direction:column;gap:6px;font-size:11.5px">
+            <div>
+              <strong style="display:block;margin-bottom:3px;color:#0f172a" data-i="immoSafeTitle">1. Safe Read-Only Immobilizer Diagnostics (No PIN Required):</strong>
+              <div class="immo-grid">
+                <button data-immo="read_status" class="primary" data-i="immoReadStatus">Read Key Count & Date (21 A1 / 21 01)</button>
+                <button data-immo="read_transponder" class="primary" data-i="immoReadTp">Read Transponder Chip ID (21 B0)</button>
+                <button data-immo="read_pin" data-i="immoReadPin">Direct EEPROM PIN Read (10 C0 -> 21 21)</button>
+                <button data-immo="antenna_test" data-i="immoAntTest">Keyless Interior Antenna Test (2F 01 06)</button>
+              </div>
+            </div>
+            <div style="border-top:1px solid #cbd5e1;padding-top:5px">
+              <strong style="display:block;margin-bottom:3px;color:#0f172a" data-i="immoPinTitle">2. 4-Digit PIN Key & Remote Coding (Grand Vitara JB, Swift, SX4, Jimny — CAN & K-Line):</strong>
+              <div style="display:flex;gap:5px;align-items:center;margin-bottom:4px;flex-wrap:wrap">
+                <label class="mono" style="font-weight:700">PIN:</label>
+                <input id="immoPinInput" value="0895" maxlength="4" class="mono" style="width:68px;font-weight:700;text-align:center" placeholder="0895">
+                <select id="immoPinPreset" style="flex:1;min-width:160px">
+                  <option value="0895">0895 (Suzuki Standard / Denso Factory PIN)</option>
+                  <option value="9502">9502 (Suzuki Type-2 / Mitsubishi PIN)</option>
+                  <option value="5634">5634 (Suzuki Type-3 / Classic PIN)</option>
+                  <option value="0325">0325 (Suzuki Type-4 Alt PIN)</option>
+                  <option value="">Custom 4-Digit PIN...</option>
+                </select>
+                <button data-immo="verify_pin" data-i="immoVerifyPin">Verify PIN Only (Safe Test)</button>
+              </div>
+              <div class="immo-grid">
+                <button data-immo="register_key" class="primary" data-i="immoRegKey">Register Transponder Key (30 A1 80 / A5 A1 80)</button>
+                <button data-immo="register_remote" class="primary" data-i="immoRegRemote">Register Remote Fob (A5 A1 20 / 30 62 07)</button>
+                <button data-immo="ecu_immo_init" data-i="immoEcuInit">ECM-Immo Pairing Init (31 01 + PIN)</button>
+                <button data-immo="steering_unlock" data-i="immoEslUnlock">Steering Lock ESL Unlock (31 0D 00 + PIN)</button>
+              </div>
+              <div style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap">
+                <span style="font-size:11px;color:#b91c1c;font-weight:600" data-i="immoWarnText">⚠️ Have ALL keys ready before erasing/coding!</span>
+                <button data-immo="delete_all_keys" class="danger" data-i="immoDeleteKeys">Erase All Keys (30 A1 08 / A5 A1 08)</button>
+              </div>
+            </div>
+            <div style="border-top:1px solid #cbd5e1;padding-top:5px">
+              <strong style="display:block;margin-bottom:3px;color:#0f172a" data-i="immoUdsTitle">3. 2015+ UDS Seed-Key Immobilizer (Vitara LY, S-Cross, Swift A2L — IMMO-110..113):</strong>
+              <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+                <button data-immo="uds_request_seed" data-i="immoUdsSeed">1. Request Seed (27 03)</button>
+                <input id="immoSeedKeyInput" class="mono" style="flex:1;min-width:120px" placeholder="Calculated Key Hex (e.g. 11 22 33 44)">
+                <button data-immo="uds_unlock_register" class="primary" data-i="immoUdsUnlock">2. Send Key (27 04) & Register (31 01 01 0D)</button>
+              </div>
+            </div>
+          </div>
+          <div class="pane-head"><span data-i="codingLogTitle">BCM Coding & Immobilizer Execution Log</span></div>
+          <pre id="codingLog" class="log-box">--</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="statusbar">
+    <div id="activity">Ready</div>
+    <div style="font-size:11px;color:#94a3b8">BETA · Hardware verified on Grand Vitara 1.9 DDiS · Other models experimental</div>
+    <div id="firmware" class="mono">--</div>
+  </footer>
+</div>
+
+<script src="/discovery-plan.js"></script>
+<script>
+'use strict';
+const dictionary={
+tr:{
+  vciLabel:'J2534 Cihazı:',profileLabel:'Araç Profili:',connect:'Bağlan',refresh:'Yenile',customDllBtn:'DLL...',
+  detect:'Otomatik Algıla',dllPath:'Özel J2534 DLL Yolu:',loadDll:'DLL Yükle',
+  tabDiag:'1. Sistem Taraması & DTC',tabLive:'2. Canlı Veri (Data List)',tabService:'3. Servis & Kalibrasyon',tabAdv:'4. ECU Kimlik & K-Line',tabCoding:'5. Gizli Özellikler & Immobilizer',
+  readCodingBtn:'Mevcut Araç Kodlamasını Oku (21 08 / 21 01)',codingTableTitle:'Modele Göre Gizli Özellikler & BCM Kişiselleştirme (21 Fonksiyon)',codingLogTitle:'BCM Kodlama & Immobilizer İşlem Günlüğü',
+  colFeature:'Gizli Özellik / Fonksiyon',colModels:'Uyumlu Modeller / Protokol',colSetting:'Hedef Ayar',
+  immoPanelTitle:'Immobilizer, Transponder & Keyless Anahtar Kodlama (IMMO-01..207)',
+  immoSafeTitle:'1. Şifresiz (PIN Gerekmeden) Immobilizer Okuma & Test İşlemleri:',
+  immoReadStatus:'Kayıtlı Anahtar Sayısı & Tarihi Oku (21 A1 / 21 01)',immoReadTp:'Kontraktaki Anahtar Çip ID Oku (21 B0)',
+  immoReadPin:'EEPROM Doğrudan PIN Okuma (10 C0 -> 21 21)',immoAntTest:'Keyless İç Anten Testi (2F 01 06)',
+  immoPinTitle:'2. 4 Haneli PIN ile Anahtar & Kumanda Kodlama (Grand Vitara JB, Swift, SX4, Jimny — CAN & K-Line):',
+  immoVerifyPin:'Sadece PIN Doğrula (Güvenli Test)',immoRegKey:'Yeni Transponder Anahtar Kodla (30 A1 80 / A5 A1 80)',
+  immoRegRemote:'Uzaktan Kumanda (Remote) Kodla (A5 A1 20 / 30 62 07)',immoEcuInit:'ECM - Immobilizer Beyin Eşleştirme (31 01 + PIN)',
+  immoEslUnlock:'Elektronik Direksiyon Kilidi (ESL) Açma (31 0D 00 + PIN)',immoWarnText:'⚠️ Silme/kodlama öncesi TÜM anahtarlar yanınızda olsun!',
+  immoDeleteKeys:'Tüm Anahtarları Sil (30 A1 08 / A5 A1 08)',
+  immoUdsTitle:'3. 2015+ UDS Seed-Key Immobilizer (Vitara LY, S-Cross, Yeni Swift — IMMO-110..113):',
+  immoUdsSeed:'1. Seed İste (27 03)',immoUdsUnlock:'2. Key Gönder (27 04) & Kaydet (31 01 01 0D)',
+  scanBtn:'Tüm Kontrol Ünitelerini Tara',clearBtn:'Tüm Arıza Kodlarını Sil (DTC Clear)',ffBtn:'Freeze-Frame Oku (12 / 19 04 / 21 87)',exportReportBtn:'Arıza & Tarama Raporu İndir (.html)',
+  ecuListTitle:'Kontrol Üniteleri (ECU Listesi)',dtcListTitle:'Arıza Kodları (DTC)',
+  colModule:'Modül',colSystem:'Sistem',colAddr:'Protokol / Adres',colStatus:'Durum',colDtc:'DTC',
+  colCode:'Kod',colDesc:'Arıza Açıklaması',colRef:'Servis Kontrol Noktası',
+  startLive:'Canlı Veriyi Başlat',stopLive:'Canlı Veriyi Durdur',csvRecordStart:'CSV Kaydı Başlat',csvRecordStop:'CSV Kaydını Durdur',dbPageLabel:'DB Sayfa:',dbReadBtn:'DB Parametre Oku',
+  imaBarTitle:'Enjektör IMA Kodlama (Silindir 1–4):',imaReadBtn:'IMA Oku (21 AD)',imaWriteBtn:'IMA Yaz & ZFC Sıfırla (3B AD)',
+  vinBarTitle:'Şasi No (17 Hane VIN):',vinReadBtn:'VIN Oku (1A 90 / 22 F1 90)',vinWriteBtn:'ECM VIN Yaz (3B 90)',
+  dbCatalogFilterTitle:'Suzuki OBD Aktif Test (631) & Servis Fonksiyonu (570) Kataloğu:',allBasesOpt:'Tüm ECU Sistemleri (All Bases)',dbCatalogLoadBtn:'Kataloğu Filtrele / Yükle',
+  activeTestTableTitle:'Suzuki OBD Aktif Testler (Actuator Test · 631 Test · Servis 0x30 / 0x2F)',dbUtilityTableTitle:'Suzuki OBD Servis Fonksiyonları (570 Utility · Doğrudan ECU Çalıştırma)',
+  colActName:'Aktüatör / Test Adı',colControl:'Kontrol',
+  liveTableTitle:'Canlı Sensör Değerleri (Motor & ABS/ESP)',dbTableTitle:'Genişletilmiş ECU Parametreleri (21 / 22 Servisi)',
+  colParam:'Parametre',colValue:'Değer',colUnit:'Birim',colSource:'Kaynak',
+  serviceTableTitle:'Özel Servis ve Kalibrasyon Fonksiyonları (Utility)',colFunc:'Servis İşlemi',colCond:'Önkoşul',colAction:'İşlem',runBtn:'Başlat',
+  sas:'ABS / ESP Direksiyon Açısı (SAS) & G-Sensör Kalibrasyonu',sasCond:'Araç düz zeminde, direksiyon tam düz, fren bırakılmış, kontak AÇIK',
+  egr:'EGR Valfi Bilgisi Başlatılıyor (EGR Adaptasyon Sıfırlama)',egrCond:'Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 21 64 -> 3B 64)',
+  throttle:'Giriş Kelebek Valfi (Boğaz Kelebeği) Bilgisi Başlatılıyor',throttleCond:'Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 2E 2F 1D..21)',
+  injector:'Enjektör Kalibrasyon Kodu (IMA) Okuma & ZFC Sıfırlama',injectorCond:'Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 21 AD & 3B 7E FE)',
+  dpf:'Dizel PF (DPF) Bilgisi Başlatılıyor / Kurum Sıfırlama',dpfCond:'Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 31 0A 00)',
+  dpf_regen:'DPF Servis Rejenerasyonu & FAP Veri Güncelleme',dpfRegenCond:'Motor çalışma sıcaklığında, rölantide (0x7E0 F9Q 31 0D 00)',
+  oil:'Motor Yağ Değişim Işığını & Seyreltim Sayacını Resetleme',oilCond:'Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 21 6A -> 3B 6A)',
+  rail_test:'Yüksek Basınç (Common Rail) Sızdırmazlık Testi',railTestCond:'Motor sıcak, rölantide çalışıyor (0x7E0 F9Q 3B 62 -> 31 62 00)',
+  f9q_ecm_replace:'ECM Değişimi / Enjektör & EGR & DPF Hafıza Transferi (F9Q)',f9qEcmCond:'Kontak AÇIK, motor çalışmıyor (0x7E0 F9Q 21 AD/64/7E/AC -> 2E/3B)',
+  f9q_starter_test:'Marş Motoru / Montaj Kontrol Testi (F9Q)',f9qStarterCond:'Kontak AÇIK (0x7E0 F9Q 31 61 00 -> 21 61 -> 31 61 01)',
+  can_dpf_regen:'CAN Dizel DPF Servis Rejenerasyonu (D13A / D16AA / D20AA)',canDpfRegenCond:'Motor sıcak, rölantide (0x7E0 30 72 08 80 80 00 00)',
+  can_oil_reset:'CAN Dizel Yağ Değişim & Seyreltim Sıfırlama (30 74 08 02)',canOilCond:'Kontak AÇIK, motor çalışmıyor (0x7E0 30 74 08 02 02 00 00)',
+  can_egr_learn:'CAN Dizel EGR Valfi Öğrenme Değerini Sıfırlama (30 70 08 08)',canEgrCond:'Kontak AÇIK, motor çalışmıyor (0x7E0 30 70 08 08 08 00 00)',
+  can_diesel_sensors:'CAN Dizel Sensör & Parça Değişim Sıfırlama (Fark Basınç / DPF / MAF / A-F / PRV / Rail)',canSensorsCond:'Kontak AÇIK, motor çalışmıyor (0x7E0 30 74 08 .. / 30 78 08 80)',
+  petrol_ecm:'Benzinli ECM Gaz Kelebeği, Rölanti (IAC), Yakıt Trim, Fren Strok & GPF Öğrenme',petrolEcmCond:'Kontak AÇIK, motor çalışmıyor (30 04 00 / 31 03 00 / 31 06 00 / 31 01 C0)',
+  tcm:'Şanzıman (TCM) Nötr Konum, Debriyaj (AMT) & CVT Öğrenme Sıfırlama',tcmCond:'Kontak AÇIK, vites N/P konumunda (0x7E1 30 60 / 30 77 / 30 00 / 31 01 C1)',
+  eps:'EPS Elektrikli Direksiyon Tork / Açı Sıfır Noktası Kalibrasyonu',epsCond:'Direksiyon tam düz, araç sabit (0x742 30 11 08 80 80 00 00)',
+  abs_bleed:'ABS Hidrolik Fren Hava Alma (Air Bleeding) & ESP Fonksiyon Testi',absBleedCond:'Kontak AÇIK, araç sabit (0x740 / K-Line 30 00 07 01 / 30 80 07 04)',
+  bcm_airbag:'BCM Hava Yastığı (Airbag) Çarpışma Kaydı / Darbe Geçmişi Silme',bcmAirbagCond:'Kontak AÇIK (0x745 30 07 08 08 00 / K-Line A5 07 08 00)',
+  tpms:'TPMS Lastik Basınç Sensörü ID Kayıt Modu Başlatma',tpmsCond:'Kontak AÇIK (0x745 BCM 30 08 07 80 / 30 25 07 80)',
+  ipc:'Gösterge Paneli (IPC / Kombine Metre) Bakım / Yağ İkaz Sıfırlama',ipcCond:'Kontak AÇIK (0x7C0 IPC 30 35 08 80 00 00 00)',
+  alc:'Otomatik Far Seviyeleme (ALC) Sensör Başlatma / Sıfırlama',alcCond:'Araç düz zeminde, yüksüz, kontak AÇIK (0x746 30 00 08 80 80 00 00)',
+  epb:'EPB Elektronik Park Freni Balata Değişim (Servis) Modu & Kalibrasyon',epbCond:'Araç düz zeminde, kontak AÇIK (EPB 0x740 / K-Line A6 00 -> 30 01 07 -> 31 01 02)',
+  hvac:'Klima (HVAC) Hava Karışım Klepesi (Air Mix Flap) & Kompresör Başlatma',hvacCond:'Kontak AÇIK (0x7A2 CAN / 0x99 K-Line 30 01 08 80 80 -> 31 01 00)',
+  shvs_hybrid:'SHVS Mild-Hybrid / Strong Hybrid (ISG / Li-Ion Batarya BMU) Sıfırlama',shvsCond:'Kontak AÇIK, Ready OFF (30 01 07 80 80 / 31 01 C0 10)',
+  adas_calib:'ADAS Ön Kamera / Radar / Kör Nokta (BSM) & 360 AVM Kalibrasyon Başlatma',adasCond:'Araç düz zeminde, hedef/kalibrasyon koşulu hazır, kontak AÇIK (31 01 C0 01)',
+  clear:'Tüm Kontrol Ünitelerinde Arıza Kodlarını Temizle',clearCond:'Kontak AÇIK, motor çalışmıyor (14 FF FF FF / 14 FF 00 / 14 40 00)',
+  serviceLogTitle:'Prosedür ve ECU Yanıt Günlüğü',ecuToolsTitle:'ECM Kimlik (21 80 / 1A 8E) & Local ID Okuma',
+  ident:'ECM Kimliğini Oku',discover:'Local ID Tara (21 01..FE)',startRaw:'Ham Akışı Başlat',stopRaw:'Ham Akışı Durdur',
+  ready:'BAĞLI',offline:'YOK',unavailable:'SUNUCU YOK',working:'İşlem yürütülüyor...',done:'Hazır',failed:'Hata',
+  notRead:'Tarama bekleniyor ("Tüm Kontrol Ünitelerini Tara" butonuna basın)',emptyDtc:'Arıza kodu (DTC) bulunmadı.',
+  noResponse:'Yanıt Yok',codesNone:'Normal (0 DTC)',codesUnknown:'Okunamadı',codesFound:'Arıza Kodu',
+  confirmService:'Seçilen servis prosedürü ECU üzerinde çalıştırılacak. Kontak AÇIK ve araç sabit mi?\nİşlem: ',
+  auto:'Otomatik Algıla (CAN + K-Line)',diesel:'Grand Vitara 1.9 DDiS (JB419D / F9Q)',petrol:'Grand Vitara Benzinli (JB Serisi)',can:'Suzuki Genel CAN (500 kbps)',kline:'Suzuki Klasik K-Line (Pin 7)',
+  rpm:'Motor Devri (RPM)',desiredIdle:'Hedef Rölanti Devri',speed:'Araç Hızı',coolant:'Motor Soğutma Suyu Sıcaklığı',
+  intake:'Emme Havası Sıcaklığı',fuelTemp:'Yakıt Sıcaklığı',rail:'Common Rail Yakıt Basıncı',boost:'Turbo / Mutlak Basınç',
+  baro:'Atmosferik Basınç',pedal:'Gaz Pedalı Konumu',ecmVbatt:'ECM Besleme Voltajı',soot:'DPF Kurum Yükü',
+  dpfTemp:'DPF Egzoz Giriş Sıcaklığı',dpfDiff:'DPF Fark Basıncı',steering:'Direksiyon Açısı (SAS)',yaw:'Savrulma Hızı (Yaw Rate)',latG:'Yanal İvme (Lateral G)'
+},
+en:{
+  vciLabel:'J2534 Interface:',profileLabel:'Vehicle Profile:',connect:'Connect',refresh:'Refresh',customDllBtn:'DLL...',
+  detect:'Auto Detect',dllPath:'Custom J2534 DLL Path:',loadDll:'Load DLL',
+  tabDiag:'1. System Scan & DTCs',tabLive:'2. Live Data (Data List)',tabService:'3. Service & Calibration',tabAdv:'4. ECU ID & K-Line',tabCoding:'5. Hidden Features & Immo Coding',
+  readCodingBtn:'Read Current Vehicle Coding (21 08 / 21 01)',codingTableTitle:'Model-by-Model Hidden Features & BCM Personalization (21 Functions)',codingLogTitle:'BCM Coding & Immobilizer Execution Log',
+  colFeature:'Hidden Feature / Function',colModels:'Supported Models / Protocol',colSetting:'Target Setting',
+  immoPanelTitle:'Immobilizer, Transponder & Keyless Key Programming (IMMO-01..207)',
+  immoSafeTitle:'1. Safe Read-Only Immobilizer Diagnostics (No PIN Required):',
+  immoReadStatus:'Read Key Count & Date (21 A1 / 21 01)',immoReadTp:'Read Transponder Chip ID (21 B0)',
+  immoReadPin:'Direct EEPROM PIN Read (10 C0 -> 21 21)',immoAntTest:'Keyless Interior Antenna Test (2F 01 06)',
+  immoPinTitle:'2. 4-Digit PIN Key & Remote Coding (Grand Vitara JB, Swift, SX4, Jimny — CAN & K-Line):',
+  immoVerifyPin:'Verify PIN Only (Safe Test)',immoRegKey:'Register Transponder Key (30 A1 80 / A5 A1 80)',
+  immoRegRemote:'Register Remote Fob (A5 A1 20 / 30 62 07)',immoEcuInit:'ECM-Immo Pairing Init (31 01 + PIN)',
+  immoEslUnlock:'Steering Lock ESL Unlock (31 0D 00 + PIN)',immoWarnText:'⚠️ Have ALL keys ready before erasing/coding!',
+  immoDeleteKeys:'Erase All Keys (30 A1 08 / A5 A1 08)',
+  immoUdsTitle:'3. 2015+ UDS Seed-Key Immobilizer (Vitara LY, S-Cross, Swift A2L — IMMO-110..113):',
+  immoUdsSeed:'1. Request Seed (27 03)',immoUdsUnlock:'2. Send Key (27 04) & Register (31 01 01 0D)',
+  scanBtn:'Scan All Control Units',clearBtn:'Clear All DTCs',ffBtn:'Read Freeze-Frame (12 / 19 04 / 21 87)',exportReportBtn:'Export Diagnostic Report (.html)',
+  ecuListTitle:'Control Units (ECU List)',dtcListTitle:'Diagnostic Trouble Codes (DTC)',
+  colModule:'Module',colSystem:'System',colAddr:'Protocol / Address',colStatus:'Status',colDtc:'DTC',
+  colCode:'Code',colDesc:'Fault Description',colRef:'Service Check Point',
+  startLive:'Start Live Data',stopLive:'Stop Live Data',csvRecordStart:'Record CSV Log',csvRecordStop:'Stop CSV Recording',dbPageLabel:'DB Page:',dbReadBtn:'Read DB Page',
+  imaBarTitle:'Injector IMA (Cyl 1–4):',imaReadBtn:'Read IMA (21 AD)',imaWriteBtn:'Write IMA & ZFC Reset (3B AD)',
+  vinBarTitle:'VIN (17-Ch):',vinReadBtn:'Read VIN (1A 90 / 22 F1 90)',vinWriteBtn:'Write VIN (3B 90)',
+  dbCatalogFilterTitle:'Suzuki OBD Active Tests (631) & Service Functions (570) Catalog:',allBasesOpt:'All ECU Systems (All Bases)',dbCatalogLoadBtn:'Filter / Load Catalog',
+  activeTestTableTitle:'Suzuki OBD Active Tests (Actuator Test · 631 Tests · Service 0x30 / 0x2F)',dbUtilityTableTitle:'Suzuki OBD Service Functions (570 Utilities · Direct ECU Execution)',
+  colActName:'Actuator / Test Name',colControl:'Control',
+  liveTableTitle:'Live Sensor Values (Engine & ABS/ESP)',dbTableTitle:'Extended ECU Parameters (Service 21 / 22)',
+  colParam:'Parameter',colValue:'Value',colUnit:'Unit',colSource:'Source',
+  serviceTableTitle:'Special Service & Calibration Functions (Utility)',colFunc:'Function',colCond:'Precondition',colAction:'Action',runBtn:'Execute',
+  sas:'ABS / ESP Steering Angle (SAS) & G-Sensor Calibration',sasCond:'Vehicle on level ground, steering straight, brake released, IG ON',
+  egr:'Initialize EGR Valve Data (EGR Adaptation Reset)',egrCond:'Ignition ON, engine stopped (0x7E0 F9Q 21 64 -> 3B 64)',
+  throttle:'Initialize Inlet Throttle Valve Data',throttleCond:'Ignition ON, engine stopped (0x7E0 F9Q 2E 2F 1D..21)',
+  injector:'Injector Calibration Code (IMA) Read & ZFC Reset',injectorCond:'Ignition ON, engine stopped (0x7E0 F9Q 21 AD & 3B 7E FE)',
+  dpf:'Initialize Diesel PF (DPF) Data / Soot Reset',dpfCond:'Ignition ON, engine stopped (0x7E0 F9Q 31 0A 00)',
+  dpf_regen:'DPF Service Regeneration & FAP Data Update',dpfRegenCond:'Engine at operating temperature, idling (0x7E0 F9Q 31 0D 00)',
+  oil:'Oil Change Request Light & Dilution Counter Reset',oilCond:'Ignition ON, engine stopped (0x7E0 F9Q 21 6A -> 3B 6A)',
+  rail_test:'High Pressure (Common Rail) Leak Test',railTestCond:'Engine warm, idling (0x7E0 F9Q 3B 62 -> 31 62 00)',
+  f9q_ecm_replace:'ECM Replacement / Injector, EGR & DPF Memory Transfer (F9Q)',f9qEcmCond:'Ignition ON, engine stopped (0x7E0 F9Q 21 AD/64/7E/AC -> 2E/3B)',
+  f9q_starter_test:'Starter Motor / Assembly Check Test (F9Q)',f9qStarterCond:'Ignition ON (0x7E0 F9Q 31 61 00 -> 21 61 -> 31 61 01)',
+  can_dpf_regen:'CAN Diesel DPF Service Regeneration (D13A / D16AA / D20AA)',canDpfRegenCond:'Engine warm, idling (0x7E0 30 72 08 80 80 00 00)',
+  can_oil_reset:'CAN Diesel Oil Change & Dilution Reset (30 74 08 02)',canOilCond:'Ignition ON, engine stopped (0x7E0 30 74 08 02 02 00 00)',
+  can_egr_learn:'CAN Diesel EGR Valve Learning Value Reset (30 70 08 08)',canEgrCond:'Ignition ON, engine stopped (0x7E0 30 70 08 08 08 00 00)',
+  can_diesel_sensors:'CAN Diesel Sensor & Component Replacement Reset (Diff Press / DPF / MAF / A-F / PRV / Rail)',canSensorsCond:'Ignition ON, engine stopped (0x7E0 30 74 08 .. / 30 78 08 80)',
+  petrol_ecm:'Petrol ECM Throttle, Idle Air (IAC), Fuel Trim, Brake Stroke & GPF Learning',petrolEcmCond:'Ignition ON, engine stopped (30 04 00 / 31 03 00 / 31 06 00 / 31 01 C0)',
+  tcm:'Transmission (TCM) Neutral Position, Clutch (AMT) & CVT Learning Reset',tcmCond:'Ignition ON, selector in N/P (0x7E1 30 60 / 30 77 / 30 00 / 31 01 C1)',
+  eps:'EPS Electric Power Steering Torque / Angle Zero Point Calibration',epsCond:'Steering straight ahead, stationary (0x742 30 11 08 80 80 00 00)',
+  abs_bleed:'ABS Hydraulic Air Bleeding & ESP Function Check',absBleedCond:'Ignition ON, stationary (0x740 / K-Line 30 00 07 01 / 30 80 07 04)',
+  bcm_airbag:'BCM Airbag Deployment Record / Crash History Clear',bcmAirbagCond:'Ignition ON (0x745 30 07 08 08 00 / K-Line A5 07 08 00)',
+  tpms:'TPMS Tire Pressure Sensor ID Registration Mode',tpmsCond:'Ignition ON (0x745 BCM 30 08 07 80 / 30 25 07 80)',
+  ipc:'Instrument Cluster (IPC / Combination Meter) Oil / Service Reminder Reset',ipcCond:'Ignition ON (0x7C0 IPC 30 35 08 80 00 00 00)',
+  alc:'Auto Headlight Leveling (ALC) Sensor Initialization',alcCond:'Vehicle on level ground, unladen, IG ON (0x746 30 00 08 80 80 00 00)',
+  epb:'EPB Electronic Parking Brake Pad Replacement Mode & Calibration',epbCond:'Vehicle on level ground, IG ON (EPB 0x740 / K-Line A6 00 -> 30 01 07 -> 31 01 02)',
+  hvac:'HVAC Climate Air Mix Flap Actuator & Compressor Initialization',hvacCond:'Ignition ON (0x7A2 CAN / 0x99 K-Line 30 01 08 80 80 -> 31 01 00)',
+  shvs_hybrid:'SHVS Mild-Hybrid / Strong Hybrid (ISG / Li-Ion Battery BMU) Reset',shvsCond:'Ignition ON, Ready OFF (30 01 07 80 80 / 31 01 C0 10)',
+  adas_calib:'ADAS Front Camera / Radar / Blind Spot (BSM) & 360 AVM Calibration Init',adasCond:'Vehicle on level ground, calibration target ready, IG ON (31 01 C0 01)',
+  clear:'Clear Trouble Codes in All Control Units',clearCond:'Ignition ON, engine stopped (14 FF FF FF / 14 FF 00 / 14 40 00)',
+  serviceLogTitle:'Procedure & ECU Response Log',ecuToolsTitle:'ECM Identification (21 80 / 1A 8E) & Local IDs',
+  ident:'Read ECM ID',discover:'Scan Local IDs (21 01..FE)',startRaw:'Start Raw Stream',stopRaw:'Stop Raw Stream',
+  ready:'ONLINE',offline:'OFFLINE',unavailable:'NO SERVER',working:'Executing...',done:'Ready',failed:'Error',
+  notRead:'Waiting for scan (Click "Scan All Control Units")',emptyDtc:'No trouble codes (DTC) found.',
+  noResponse:'No Response',codesNone:'Normal (0 DTC)',codesUnknown:'Unread',codesFound:'DTC(s)',
+  confirmService:'Execute this service procedure on the ECU? Ensure Ignition is ON and vehicle is stationary.\nProcedure: ',
+  auto:'Auto Detect (CAN + K-Line)',diesel:'Grand Vitara 1.9 DDiS (JB419D / F9Q)',petrol:'Grand Vitara Petrol (JB Series)',can:'Suzuki Generic CAN (500 kbps)',kline:'Suzuki Classic K-Line (Pin 7)',
+  rpm:'Engine Speed (RPM)',desiredIdle:'Target Idle Speed',speed:'Vehicle Speed',coolant:'Coolant Temperature',
+  intake:'Intake Air Temperature',fuelTemp:'Fuel Temperature',rail:'Common Rail Fuel Pressure',boost:'Boost / Manifold Pressure',
+  baro:'Barometric Pressure',pedal:'Accelerator Pedal Position',ecmVbatt:'ECM Supply Voltage',soot:'DPF Soot Mass',
+  dpfTemp:'DPF Inlet Temperature',dpfDiff:'DPF Differential Pressure',steering:'Steering Angle (SAS)',yaw:'Yaw Rate',latG:'Lateral Acceleration (G)'
+}};
+
+const $=id=>document.getElementById(id);
+let lang='en';
+try{lang=localStorage.getItem('diag.language')==='tr'?'tr':'en'}catch{}
+const t=key=>dictionary[lang][key]||key;
+
+const state={busy:false,profiles:[],devices:[],activeProfile:'',scan:null,status:null,live:null,dbLive:null,liveOn:false,rawOn:false,liveTimer:null,rawTimer:null,generation:0,rawIds:[],autoDetected:false};
+const profileTitleMap={auto:'auto',gv_jb419d:'diesel',gv_petrol:'petrol',suzuki_can:'can',suzuki_kline:'kline'};
+
+const metricDefs=[
+  ['rpm','rpm','rpm',0,'ECM'],
+  ['desiredIdle','desiredIdle','rpm',0,'ECM'],
+  ['speed','speed','km/h',1,'ECM / ABS'],
+  ['coolantTemp','coolant','°C',1,'ECM'],
+  ['intakeAirTemp','intake','°C',1,'ECM'],
+  ['fuelTemp','fuelTemp','°C',1,'ECM'],
+  ['railPressBar','rail','bar',1,'ECM'],
+  ['boostPress','boost','hPa',0,'ECM'],
+  ['baroPress','baro','hPa',0,'ECM'],
+  ['pedalPos','pedal','%',1,'ECM'],
+  ['ecmVbatt','ecmVbatt','V',2,'ECM'],
+  ['dpfSootGram','soot','g',2,'ECM (DPF)'],
+  ['dpfTemp','dpfTemp','°C',1,'ECM (DPF)'],
+  ['dpfDiffPress','dpfDiff','hPa',0,'ECM (DPF)'],
+  ['steeringAngle','steering','°',1,'ABS / ESP'],
+  ['yawRate','yaw','°/s',1,'ABS / ESP'],
+  ['lateralG','latG','G',2,'ABS / ESP']
+];
+
+function profileTitle(id){
+  if(profileTitleMap[id]) return t(profileTitleMap[id]);
+  const p=state.profiles.find(x=>x.id===id);
+  return p?.title||id||'--';
+}
+
+function setActivity(msg){ $('activity').textContent=msg; }
+
+function emptyRow(tbody,cols,text){
+  tbody.replaceChildren();
+  const tr=document.createElement('tr'),td=document.createElement('td');
+  td.colSpan=cols;
+  td.style.textAlign='center';
+  td.style.padding='18px';
+  td.style.color='#64748b';
+  td.textContent=text;
+  tr.append(td);
+  tbody.append(tr);
+}
+
+function addCell(tr,text,cls=''){
+  const td=document.createElement('td');
+  td.textContent=text??'--';
+  if(cls) td.className=cls;
+  tr.append(td);
+  return td;
+}
+
+function renderServicesForVehicle(autoSyncBase=false){
+  const prof=state.activeProfile||'auto';
+  const filterOn=Boolean($('filterServiceByVehicle')?.checked) && prof!=='auto';
+  const rows=document.querySelectorAll('#serviceRows tr[data-profiles]');
+  let shown=0;
+  rows.forEach(tr=>{
+    const list=(tr.dataset.profiles||'').split(',');
+    const match=!filterOn || list.includes(prof);
+    tr.hidden=!match;
+    if(match) shown++;
+  });
+  if($('serviceFilterBadge')){
+    $('serviceFilterBadge').textContent=(lang==='tr'?'Modele Göre Filtrele':'Filter by Model')+' ('+shown+'/'+rows.length+')';
+  }
+  if(autoSyncBase && $('dbCatalogBase')){
+    const baseMap={gv_jb419d:'93',gv_petrol:'41',suzuki_can:'41',suzuki_kline:'64',auto:'0'};
+    const targetBase=String(lastIdentity?.baseId||baseMap[prof]||'0');
+    if([...$('dbCatalogBase').options].some(o=>o.value===targetBase) && $('dbCatalogBase').value!==targetBase){
+      $('dbCatalogBase').value=targetBase;
+      loadDbCatalog().catch(()=>{});
+    }
+  }
+}
+
+const hiddenFeaturesCatalog=[
+  {id:'HF-DRL',code:'BCM 30 36 08 80',profiles:['suzuki_can','gv_petrol'],titleEn:'Daytime Running Lights (DRL) Activation',titleTr:'Gündüz Sürüş Farı (DRL) Aktivasyonu / İptali',modelsEn:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny JB74 (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny JB74 (CAN BCM)',options:[{val:1,en:'ON (DRL Enabled)',tr:'AÇIK (DRL Aktif)'},{val:0,en:'OFF (DRL Disabled)',tr:'KAPALI (DRL İptal)'}]},
+  {id:'HF-AUTOLOCK',code:'BCM 30 35 / 3B 2F',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Speed / Shift Linked Auto Door Lock',titleTr:'Hıza (15 km/s) veya Vitese Duyarlı Otomatik Kapı Kilitleme',modelsEn:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',modelsTr:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',options:[{val:1,en:'Speed Responsive (15 km/h)',tr:'Hıza Duyarlı (15 km/s Üzeri Kilitle)'},{val:2,en:'Shift Lever Linked (Out of P)',tr:'Vites (P Konumundan Çıkınca Kilitle)'},{val:0,en:'OFF (Disabled)',tr:'KAPALI (Devre Dışı)'}]},
+  {id:'HF-AUTOUNLOCK',code:'BCM 30 35 / 3B 02',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Ignition OFF / Shift-P Auto Door Unlock',titleTr:'Kontak Kapatınca (IG OFF) veya P Vitesinde Otomatik Kilit Açma',modelsEn:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',modelsTr:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',options:[{val:1,en:'Ignition OFF Linked Unlock',tr:'Kontak Kapatınca (IG OFF) Otomatik Aç'},{val:2,en:'Shift-P Linked Unlock (AT/CVT)',tr:'P Vitesine Alınca Otomatik Aç'},{val:0,en:'OFF (Disabled)',tr:'KAPALI (Devre Dışı)'}]},
+  {id:'HF-LANEFLASH',code:'BCM 30 35 08 20',profiles:['suzuki_can','gv_petrol'],titleEn:'Comfort Turn Signal (Lane Change Flash Count)',titleTr:'Konfor Sinyali (Tek Dokunuş Şerit Değiştirme Sinyal Sayısı)',modelsEn:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny (CAN BCM)',options:[{val:3,en:'4 Flashes (+3 Comfort)',tr:'4 Kez Yanıp Sönme (+3 Konfor)'},{val:2,en:'3 Flashes (+2 Standard)',tr:'3 Kez Yanıp Sönme (+2 Standart)'},{val:1,en:'2 Flashes (+1 Short)',tr:'2 Kez Yanıp Sönme (+1 Kısa)'},{val:0,en:'OFF (Single Flash)',tr:'KAPALI (Tek Sinyal)'}]},
+  {id:'HF-MIRROR',code:'BCM 30 33 08 20',profiles:['suzuki_can'],titleEn:'Auto Folding Side Mirrors on Door Lock',titleTr:'Kumandadan Kilitleyince Otomatik Katlanır Yan Aynalar',modelsEn:'Vitara, S-Cross, Swift AZG/A2L, Baleno (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift AZG/A2L, Baleno (CAN BCM)',options:[{val:1,en:'ON (Fold on Lock)',tr:'AÇIK (Kilitleyince Katla)'},{val:0,en:'OFF (Manual Fold Button Only)',tr:'KAPALI (Sadece İç Tuşla Katla)'}]},
+  {id:'HF-CORNER',code:'BCM 30 31 08 04',profiles:['suzuki_can'],titleEn:'Cornering Fog Lights (Steering / Turn Linked)',titleTr:'Dönüşe Duyarlı Viraj Aydınlatma Sis Farları (Cornering Light)',modelsEn:'Vitara, S-Cross, Swift, Baleno (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno (CAN BCM)',options:[{val:1,en:'ON (Cornering Fog Active)',tr:'AÇIK (Viraj Sis Farı Aktif)'},{val:0,en:'OFF (Disabled)',tr:'KAPALI (Devre Dışı)'}]},
+  {id:'HF-BUZZER',code:'BCM 30 33 / 3B 2B',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Lock / Unlock Acoustic Answerback (Buzzer / Horn / Siren)',titleTr:'Kapı Kilitleme / Açma Sesli Onay (Buzzer / Korna / Siren Sesi)',modelsEn:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',modelsTr:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',options:[{val:1,en:'ON (Keyless Buzzer Beep)',tr:'AÇIK (Keyless Buzzer Bip Sesi)'},{val:0,en:'OFF (Silent Lock/Unlock)',tr:'KAPALI (Sessiz Kilitleme/Açma)'},{val:2,en:'Horn Chirp Answerback ON',tr:'Korna Uyarı Sesi AÇIK'},{val:3,en:'Siren Chirp Answerback ON',tr:'Siren Uyarı Sesi AÇIK'}]},
+  {id:'HF-ALARM',code:'BCM 30 34 / 30 09 / 3B 21',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Factory Security Anti-Theft Alarm System',titleTr:'Fabrika Hırsızlık Önleme (Security Alarm) Sistemi Aktivasyonu',modelsEn:'Grand Vitara 1.9 DDiS / Petrol, Swift, SX4, Vitara (CAN + K-Line 0x5A)',modelsTr:'Grand Vitara 1.9 DDiS / Benzinli, Swift, SX4, Vitara (CAN + K-Line 0x5A)',options:[{val:1,en:'ON (Factory Alarm Armed)',tr:'AÇIK (Fabrika Alarmı Aktif)'},{val:0,en:'OFF (Alarm Disarmed)',tr:'KAPALI (Fabrika Alarmı Devre Dışı)'}]},
+  {id:'HF-UNLOCKMODE',code:'BCM 30 3B 08 10',profiles:['suzuki_can','gv_petrol'],titleEn:'Remote / Keyless Door Unlock Behavior (1-Press vs 2-Press)',titleTr:'Kumandadan Kilit Açma Modu (Tek Basış Tüm Kapılar / İki Aşamalı)',modelsEn:'Vitara, S-Cross, Swift, Baleno, Grand Vitara CAN',modelsTr:'Vitara, S-Cross, Swift, Baleno, Grand Vitara CAN',options:[{val:0,en:'1-Press: Unlock All Doors Immediately',tr:'Tek Basışta Tüm Kapıları Aç'},{val:1,en:'2-Press: Driver Door First, Then All',tr:'2 Aşamalı (Önce Sürücü, 2. Basışta Tümü)'}]},
+  {id:'HF-FOLLOWHOME',code:'BCM 30 3B 08 02 / 3B 39',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Guide Me Home / Follow Me Home Headlight Timer',titleTr:'Eve Kadar Takip (Follow Me Home) Far Gecikme Süresi',modelsEn:'All Suzuki CAN & K-Line BCM Models',modelsTr:'Tüm Suzuki CAN ve K-Line BCM Modelleri',options:[{val:0,en:'OFF (0 sec)',tr:'KAPALI (0 sn)'},{val:1,en:'10 Seconds',tr:'10 Saniye'},{val:2,en:'15 Seconds',tr:'15 Saniye'},{val:3,en:'20 Seconds',tr:'20 Saniye'},{val:4,en:'25 Seconds',tr:'25 Saniye'},{val:5,en:'30 Seconds',tr:'30 Saniye'}]},
+  {id:'HF-GUIDECAR',code:'BCM 30 3B 08 04',profiles:['suzuki_can'],titleEn:'Guide Me To Car (Welcome Exterior Lights on Unlock)',titleTr:'Araca Karşılama Aydınlatması (Kilit Açınca Farların Yanma Süresi)',modelsEn:'Vitara, S-Cross, Swift, Baleno, Ignis (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno, Ignis (CAN BCM)',options:[{val:0,en:'OFF (0 sec)',tr:'KAPALI (0 sn)'},{val:1,en:'10 Seconds',tr:'10 Saniye'},{val:2,en:'15 Seconds',tr:'15 Saniye'},{val:3,en:'20 Seconds',tr:'20 Saniye'},{val:4,en:'25 Seconds',tr:'25 Saniye'}]},
+  {id:'HF-FOOTLIGHT',code:'BCM 30 3B 08 80',profiles:['suzuki_can'],titleEn:'Footwell Ambient Lighting Mode',titleTr:'Ayak Altı (Footwell) Ambiyans Aydınlatma Çalışma Modu',modelsEn:'Vitara, S-Cross, Swift, Baleno (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno (CAN BCM)',options:[{val:0,en:'Linked to Headlights + Doors (Ambient + Courtesy)',tr:'Farlar + Kapılar ile Birlikte (Ambiyans + Kapı)'},{val:1,en:'Linked to Door Open Only',tr:'Sadece Kapı Açılınca Yanar'},{val:2,en:'OFF (Disabled)',tr:'KAPALI (Devre Dışı)'}]},
+  {id:'HF-HBA',code:'BCM 30 36 08 40',profiles:['suzuki_can'],titleEn:'High Beam Assist (Auto High Beam) Activation',titleTr:'Otomatik Uzun Far Asistanı (High Beam Assist) Aktivasyonu',modelsEn:'Vitara, S-Cross, Swift A2L, Jimny JB74 (Camera Equipped)',modelsTr:'Vitara, S-Cross, Swift A2L, Jimny JB74 (Kameralı Modeller)',options:[{val:1,en:'ON (High Beam Assist Enabled)',tr:'AÇIK (Uzun Far Asistanı Aktif)'},{val:0,en:'OFF (Manual High Beam Only)',tr:'KAPALI (Sadece Manuel Uzun Far)'}]},
+  {id:'HF-ANSWERLIGHT',code:'BCM 30 35 / 30 10',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Lock / Unlock Visual Answerback (Hazard vs Dome Light)',titleTr:'Kilitleme / Açma Görsel Onay (Dörtlü Sinyal vs Tavan Lambası)',modelsEn:'Grand Vitara JB (CAN/K-Line 0x5A), Swift, SX4, Vitara',modelsTr:'Grand Vitara JB (CAN/K-Line 0x5A), Swift, SX4, Vitara',options:[{val:0,en:'Hazard Warning Turn Signals Flash',tr:'Dörtlü Sinyaller Yanıp Söner (Standart)'},{val:1,en:'Interior Dome Lamp Only (Stealth Lock)',tr:'Sadece İç Tavan Lambası (Dış Sinyal Çakmaz)'}]},
+  {id:'HF-AUTOLIGHT-HW',code:'BCM 3B 3A / 33 / 34',profiles:['gv_jb419d','gv_petrol','suzuki_kline'],titleEn:'Auto Headlight Sensor & Keyless Hardware Retrofit Coding',titleTr:'Otomatik Far Sensörü & Keyless Donanım (Retrofit) Kodlaması',modelsEn:'Grand Vitara JB (1.9 DDiS / Petrol), Swift RS, SX4 (BCM 103..118)',modelsTr:'Grand Vitara JB (1.9 DDiS / Benzinli), Swift RS, SX4 (BCM 103..118)',options:[{val:1,en:'Enable Auto Light Sensor (3B 3A 06)',tr:'Otomatik Far Sensörünü Aktif Et (3B 3A 06)'},{val:0,en:'Disable Auto Light Sensor (3B 3A 04)',tr:'Otomatik Far Sensörünü Kapat (3B 3A 04)'},{val:2,en:'Enable Keyless Push-Start (3B 33 00)',tr:'Keyless Anahtarsız Çalıştırma Aktif (3B 33 00)'},{val:3,en:'Enable I-Key System (3B 34 01)',tr:'I-Key Akıllı Anahtar Aktif (3B 34 01)'}]},
+  {id:'HF-ROOMLAMP',code:'BCM 3B 16 / 3B 17',profiles:['gv_jb419d','gv_petrol','suzuki_kline'],titleEn:'Interior Dome Lamp Fade-Out & IG-OFF Delay Timer',titleTr:'İç Tavan Lambası Sönme Gecikmesi (Dimmer Timer)',modelsEn:'Grand Vitara JB (1.9 DDiS / Petrol), Swift, SX4, Jimny (K-Line/CAN)',modelsTr:'Grand Vitara JB (1.9 DDiS / Benzinli), Swift, SX4, Jimny (K-Line/CAN)',options:[{val:2,en:'2.0 Seconds Fade',tr:'2.0 Saniye Gecikmeli Sönme'},{val:3,en:'3.0 Seconds Fade',tr:'3.0 Saniye Gecikmeli Sönme'},{val:1,en:'1.0 Second Fade',tr:'1.0 Saniye Gecikmeli Sönme'},{val:0,en:'0.5 Second Fast Fade',tr:'0.5 Saniye Hızlı Sönme'},{val:4,en:'Immediate OFF (0 sec)',tr:'Anında Sönme (0 sn)'}]},
+  {id:'HF-RETAINEDPWR',code:'BCM 3B 27',profiles:['gv_jb419d','gv_petrol','suzuki_kline'],titleEn:'Retained Power Window Operation After Ignition OFF',titleTr:'Kontak Kapandıktan Sonra Cam Kaldırma Yetkisi Süresi',modelsEn:'Grand Vitara JB (1.9 DDiS / Petrol), Swift, SX4, Jimny',modelsTr:'Grand Vitara JB (1.9 DDiS / Benzinli), Swift, SX4, Jimny',options:[{val:2,en:'Extended Timer (Mode 2)',tr:'Uzatılmış Süre (Mod 2)'},{val:1,en:'Standard Timer (Mode 1)',tr:'Standart Süre (Mod 1)'},{val:0,en:'OFF (Immediate Cut on IG-OFF)',tr:'KAPALI (Kontak Kapanınca Kes)'}]},
+  {id:'HF-UDS-IKEY',code:'UDS 2E 14 01..14',profiles:['suzuki_can'],titleEn:'UDS Smart Key & Door Handle Request Switch Customization',titleTr:'UDS Akıllı Anahtar & Kapı Kolu Tuşu Kişiselleştirme (BCM 168..190)',modelsEn:'New Swift, Vitara Hybrid, S-Cross Hybrid, Baleno (UDS BCM)',modelsTr:'Yeni Swift, Vitara Hybrid, S-Cross Hybrid, Baleno (UDS BCM)',options:[{val:0,en:'Enable Door Handle Touch Unlock (2E 14 01 00)',tr:'Kapı Kolu Dokunmatik Kilit Açma AÇIK'},{val:1,en:'Disable Door Handle Touch Unlock (2E 14 01 01)',tr:'Kapı Kolu Dokunmatik Kilit Açma KAPALI'},{val:2,en:'Hazard Answerback ON (2E 14 07 00)',tr:'Dörtlü Sinyal Onayı AÇIK (2E 14 07 00)'},{val:3,en:'Hazard Answerback OFF (2E 14 07 01)',tr:'Dörtlü Sinyal Onayı KAPALI (2E 14 07 01)'},{val:4,en:'Key Reminder Buzzer ON (2E 14 14 00)',tr:'Anahtar Unutma İkazı AÇIK (2E 14 14 00)'},{val:5,en:'Key Reminder Buzzer OFF (2E 14 14 01)',tr:'Anahtar Unutma İkazı KAPALI (2E 14 14 01)'}]},
+  {id:'HF-SEATBELT',code:'BCM/IPC 2E 20 41',profiles:['suzuki_can'],titleEn:'Seatbelt Reminder Warning Chime (Acoustic Buzzer)',titleTr:'Emniyet Kemeri Sesli İkaz (Buzzer) Sesi Açma / Kapatma',modelsEn:'Suzuki UDS BCM / IPC Models (CUS-01 2E 20 41)',modelsTr:'Suzuki UDS BCM / Gösterge Modelleri (CUS-01 2E 20 41)',options:[{val:0,en:'OFF (Disable Seatbelt Chime - 00 60)',tr:'KAPALI (Kemer Sesli İkazını Sustur - 00 60)'},{val:1,en:'ON (Factory Seatbelt Chime - 00 00)',tr:'AÇIK (Fabrika Kemer Sesli İkazı - 00 00)'}]},
+  {id:'HF-CLUSTER-THEME',code:'IPC 30 05 07 / 31 01 C0',profiles:['suzuki_can'],titleEn:'Cluster / Center Display Icon Theme & Language Reset',titleTr:'Gösterge / Bilgi Ekranı İkon Renk Teması Değişimi',modelsEn:'Swift, Vitara, S-Cross, Baleno (ADM-04 / IPC)',modelsTr:'Swift, Vitara, S-Cross, Baleno (ADM-04 / Gösterge)',options:[{val:1,en:'Switch Icon Color Theme (30 05 07 40)',tr:'İkon Renk Temasını Değiştir (30 05 07 40)'},{val:0,en:'Reset Display Theme / Language (31 01 C0 11)',tr:'Ekran Temasını Fabrika Ayarına Döndür'}]},
+  {id:'HF-ESP-DYNO',code:'ABS 30 80 07 04',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'ESP Off-Road / Dyno Roller Test Mode (Temporary ESP Full Off)',titleTr:'ESP Off-Road / Dyno Test Modu (ESP Tam Devre Dışı Bırakma)',modelsEn:'Grand Vitara JB (ESP), Swift Sport, SX4, Vitara (ABS-04)',modelsTr:'Grand Vitara JB (ESP), Swift Sport, SX4, Vitara (ABS-04)',options:[{val:1,en:'Activate ESP Dyno / Off-Road Mode (30 80 07 04 04)',tr:'ESP Tam Devre Dışı Modunu Aç (30 80 07 04 04)'},{val:0,en:'Restore Normal ESP Operation (30 80 07 04 00)',tr:'Normal ESP Moduna Geri Dön (30 80 07 04 00)'}]}
+];
+
+let bcmDecodedState={};
+
+function renderCodingForVehicle(){
+  const box=$('codingRows');
+  if(!box) return;
+  const prof=state.activeProfile||'auto';
+  const filterOn=Boolean($('filterCodingByVehicle')?.checked) && prof!=='auto';
+  box.replaceChildren();
+  let shown=0;
+  for(const item of hiddenFeaturesCatalog){
+    const match=!filterOn || item.profiles.includes(prof);
+    if(!match) continue;
+    shown++;
+    const tr=document.createElement('tr');
+    addCell(tr,item.id+'\n'+item.code,'mono');
+    const titleTd=document.createElement('td');
+    const strong=document.createElement('strong');
+    strong.textContent=lang==='tr'?item.titleTr:item.titleEn;
+    titleTd.append(strong);
+    if(bcmDecodedState && Object.prototype.hasOwnProperty.call(bcmDecodedState,item.id)){
+      const curVal=bcmDecodedState[item.id];
+      const curOpt=item.options.find(o=>o.val===curVal);
+      const badge=document.createElement('div');
+      badge.className='tag-ok mono';
+      badge.style.fontSize='11px';
+      badge.style.marginTop='3px';
+      badge.textContent=(lang==='tr'?'Mevcut Araç Ayarı: ':'Current Vehicle Setting: ')+(curOpt?(lang==='tr'?curOpt.tr:curOpt.en):String(curVal));
+      titleTd.append(badge);
+    }
+    tr.append(titleTd);
+    addCell(tr,lang==='tr'?item.modelsTr:item.modelsEn,'mono');
+    const selTd=document.createElement('td');
+    const sel=document.createElement('select');
+    sel.style.width='100%';
+    for(const o of item.options){
+      sel.add(new Option(lang==='tr'?o.tr:o.en,String(o.val)));
+    }
+    if(bcmDecodedState && Object.prototype.hasOwnProperty.call(bcmDecodedState,item.id)){
+      sel.value=String(bcmDecodedState[item.id]);
+    }
+    selTd.append(sel);
+    tr.append(selTd);
+    const actTd=document.createElement('td');
+    const btn=document.createElement('button');
+    btn.className='primary';
+    btn.style.width='100%';
+    btn.textContent=lang==='tr'?'Kodla / Yaz':'Apply / Code';
+    btn.onclick=()=>operation(async()=>{
+      const optText=sel.options[sel.selectedIndex]?.text||sel.value;
+      const featTitle=lang==='tr'?item.titleTr:item.titleEn;
+      if(!confirm((lang==='tr'?'Bu gizli özellik / BCM kodlaması araca yazılacak. Kontak AÇIK mı?\n\nÖzellik: ':'Write this hidden feature / BCM coding to the vehicle? Ensure Ignition is ON.\n\nFeature: ')+featTitle+'\n -> '+optText)) return;
+      stopPolling();
+      $('codingLog').textContent=t('working');
+      const r=await api('/api/coding/write','POST',{featureId:item.id,option:sel.value},45000);
+      $('codingLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
+      if(r.success){
+        bcmDecodedState[item.id]=parseInt(sel.value,10);
+        renderCodingForVehicle();
+      }else{
+        throw Error(r.message||'Coding failed');
+      }
+    });
+    actTd.append(btn);
+    tr.append(actTd);
+    box.append(tr);
+  }
+  if($('codingFilterBadge')){
+    $('codingFilterBadge').textContent=(lang==='tr'?'Modele Göre Filtrele':'Filter by Model')+' ('+shown+'/'+hiddenFeaturesCatalog.length+')';
+  }
+}
+
+function renderProfiles(){
+  const select=$('profileSelect');
+  const prevProfile=select.value;
+  select.replaceChildren();
+  for(const p of state.profiles){
+    select.add(new Option(profileTitle(p.id),p.id));
+  }
+  if(state.activeProfile && [...select.options].some(o=>o.value===state.activeProfile)){
+    select.value=state.activeProfile;
+  }
+  const activeObj=state.profiles.find(p=>p.id===state.activeProfile);
+  $('profileDescription').textContent=(state.status?.detectedVehicle && state.status.detectedVehicle!=='ECU/model not identified')
+    ? state.status.detectedVehicle
+    : (activeObj?.description||'');
+  renderServicesForVehicle(prevProfile!==state.activeProfile);
+  renderCodingForVehicle();
+}
+
+function renderDevices(){
+  const select=$('deviceSelect');
+  select.replaceChildren();
+  for(const d of state.devices){
+    const o=new Option(d.name+(d.vendor?' ('+d.vendor+')':''),d.dllPath);
+    o.disabled=d.exists===false;
+    select.add(o);
+  }
+  if(state.status?.activeDll) select.value=state.status.activeDll;
+}
+
+function renderStatus(){
+  const s=state.status;
+  const on=Boolean(s?.connected);
+  $('connLed').className='led'+(on?' on':'');
+  $('connection').textContent=s?(on?t('ready'):t('offline')):t('unavailable');
+  $('voltage').textContent=Number.isFinite(s?.voltage)?s.voltage.toFixed(2)+' V':'-- V';
+  $('firmware').textContent=[s?.activeDeviceName||s?.activeName,s?.fw].filter(Boolean).join(' · ')||'--';
+}
+
+function renderScan(){
+  const m=$('modules'),d=$('dtcs');
+  if(!state.scan){
+    $('ecuCountBadge').textContent='';
+    $('dtcCountBadge').textContent='';
+    emptyRow(m,5,t('notRead'));
+    emptyRow(d,4,t('notRead'));
+    return;
+  }
+  const mods=state.scan.modules||[];
+  const dtcs=state.scan.dtcs||[];
+  const onlineCount=mods.filter(x=>x.responsive).length;
+  $('ecuCountBadge').textContent=onlineCount+' / '+mods.length;
+  $('dtcCountBadge').textContent=dtcs.length+' DTC';
+
+  m.replaceChildren();
+  for(const x of mods){
+    const tr=document.createElement('tr');
+    addCell(tr,x.shortName,'mono');
+    addCell(tr,x.name);
+    addCell(tr,x.canId,'mono');
+    const stCls=!x.responsive?'tag-none':(x.dtcCount===0?'tag-ok':'tag-fault');
+    const stText=!x.responsive?t('noResponse'):(x.dtcCount===0?t('codesNone'):(x.dtcCount>0?x.dtcCount+' '+t('codesFound'):x.status));
+    addCell(tr,stText,stCls);
+    addCell(tr,x.dtcCount>=0?String(x.dtcCount):'--',x.dtcCount>0?'mono tag-fault':'mono');
+    m.append(tr);
+  }
+  if(!mods.length) emptyRow(m,5,t('noResponse'));
+
+  d.replaceChildren();
+  for(const x of dtcs){
+    const tr=document.createElement('tr');
+    addCell(tr,x.code,'mono tag-fault');
+    addCell(tr,x.system,'mono');
+    addCell(tr,x.title);
+    addCell(tr,x.suggestion);
+    d.append(tr);
+  }
+  if(!dtcs.length) emptyRow(d,4,t('emptyDtc'));
+}
+
+function renderMetrics(){
+  const box=$('metrics');
+  box.replaceChildren();
+  const isNonDiesel=(state.activeProfile==='gv_petrol'||state.activeProfile==='suzuki_kline');
+  for(const [key,label,unit,prec,src] of metricDefs){
+    if(isNonDiesel && (key==='dpfSootGram'||key==='dpfTemp'||key==='dpfDiffPress')) continue;
+    const tr=document.createElement('tr');
+    addCell(tr,t(label));
+    const v=state.live?.[key];
+    addCell(tr,Number.isFinite(v)?v.toFixed(prec):'--','val-cell');
+    addCell(tr,unit,'mono');
+    addCell(tr,src,'mono');
+    box.append(tr);
+  }
+  const dbBox=$('dbMetrics');
+  dbBox.replaceChildren();
+  const vals=state.dbLive?.values||[];
+  if(!vals.length){
+    emptyRow(dbBox,4,state.dbLive?.error||'--');
+    return;
+  }
+  for(const item of vals){
+    const tr=document.createElement('tr');
+    addCell(tr,String(item.id),'mono');
+    addCell(tr,item.labelKey||String(item.id));
+    let display=item.status==='support_unknown'?(lang==='tr'?'Destek belirlenemedi':'Support unknown'):item.status==='not_supported'?(lang==='tr'?'Desteklenmiyor':'Not supported'):'--';
+    if(Number.isFinite(item.value)){
+      if(item.dataType==='enum'){
+        const output=(item.outputs||[]).find(o=>o.value===item.value);
+        display=output?(output[lang]||output.en||String(item.value)):String(item.value);
+      }else if(item.dataType==='hexstring') display='0x'+Math.trunc(item.value).toString(16).toUpperCase();
+      else display=item.value.toFixed(2);
+    }
+    addCell(tr,display,'val-cell');
+    addCell(tr,item.unit||'','mono');
+    dbBox.append(tr);
+  }
+}
+
+function clearVehicleResults(){
+  stopPolling();
+  state.scan=null;state.live=null;state.dbLive=null;state.rawIds=[];
+  renderScan();renderMetrics();
+  $('identityPanel').hidden=true;
+  for(const id of ['rawOutput','klineOutput','serviceLog']){const element=$(id);if(element){element.textContent='--';element.hidden=false}}
+}
+function stopPolling(){
+  state.liveOn=false;
+  state.rawOn=false;
+  clearTimeout(state.liveTimer);
+  clearTimeout(state.rawTimer);
+  state.generation++;
+  updateControls();
+}
+
+function updateControls(){
+  for(const id of ['detect','refresh','connect','customConnect','scan','quickClear','readFreezeFrame','ident','discover','dbLiveRead']){
+    if($(id)) $(id).disabled=state.busy;
+  }
+  $('profileSelect').disabled=state.busy;
+  $('deviceSelect').disabled=state.busy;
+  $('liveToggle').disabled=state.busy&&!state.liveOn;
+  $('rawToggle').disabled=(state.busy&&!state.rawOn)||!state.rawIds.length;
+  $('liveToggle').textContent=t(state.liveOn?'stopLive':'startLive');
+  $('rawToggle').textContent=t(state.rawOn?'stopRaw':'startRaw');
+  document.querySelectorAll('[data-service]').forEach(b=>{b.disabled=state.busy;b.removeAttribute('title')});
+}
+
+async function api(path,method='GET',body=null,timeout=45000){
+  const opts={method,signal:AbortSignal.timeout(timeout),cache:'no-store'};
+  if(body!==null){
+    opts.headers={'Content-Type':'application/json'};
+    opts.body=JSON.stringify(body);
+  }
+  const r=await fetch(path,opts);
+  let data;
+  try{data=await r.json()}catch{throw Error('HTTP '+r.status)}
+  if(!r.ok) throw Error(data.error||data.message||'HTTP '+r.status);
+  return data;
+}
+
+async function operation(fn){
+  if(state.busy) return;
+  state.busy=true;
+  setActivity(t('working'));
+  updateControls();
+  try{
+    await fn();
+    setActivity(t('done'));
+  }catch(e){
+    setActivity(t('failed')+': '+e.message);
+  }finally{
+    state.busy=false;
+    updateControls();
+  }
+}
+
+async function loadDevices(){
+  const d=await api('/api/j2534/devices','GET',null,7000);
+  state.devices=Array.isArray(d.devices)?d.devices:[];
+  state.status={...state.status,activeDll:d.activeDll,activeName:d.activeName};
+  renderDevices();
+  renderStatus();
+}
+
+async function loadProfiles(){
+  const d=await api('/api/vehicle/profiles','GET',null,7000);
+  state.profiles=Array.isArray(d.profiles)?d.profiles:[];
+  state.activeProfile=d.activeProfileId||'auto';
+  renderProfiles();
+  renderKline();
+}
+
+function shouldAutoDetect(status,attempted,profile){return !attempted&&profile==='auto'&&status?.connected===true&&Number.isFinite(status.voltage)&&status.voltage>11.0}
+async function pollStatus(){
+  if(!state.busy){
+    state.busy=true;
+    updateControls();
+    try{
+      state.status=await api('/api/status','GET',null,7000);
+      if(state.status?.activeProfileId && state.status.activeProfileId!==state.activeProfile){
+        state.activeProfile=state.status.activeProfileId;
+        renderProfiles();
+        renderKline();
+      }
+      if(!state.status?.connected)clearVehicleResults();
+      renderStatus();
+      if(shouldAutoDetect(state.status,state.autoDetected,state.activeProfile)){
+        state.autoDetected=true;
+        clearVehicleResults();
+        const detected=await api('/api/vehicle/autodetect','POST',null,30000);
+        if(detected.activeProfileId)state.activeProfile=detected.activeProfileId;
+        await loadProfiles();
+        await showIdentity();
+        setActivity(detected.message||t('done'));
+      }
+    }catch{
+      state.status=null;
+      clearVehicleResults();
+      renderStatus();
+    }finally{
+      state.busy=false;
+      updateControls();
+    }
+  }
+  setTimeout(pollStatus,5000);
+}
+
+async function selectDevice(path,name){
+  clearVehicleResults();
+  state.autoDetected=false;
+  const d=await api('/api/j2534/select','POST',{dllPath:path,name},15000);
+  state.status={...d,activeDeviceName:d.activeName||name,activeDll:path};
+  renderStatus();
+  await loadDevices();
+  if(!d.ok||!d.connected)throw Error(d.message||'J2534 device could not be opened');
+}
+
+$('toggleDll').onclick=()=>{ $('dllBar').hidden=!$('dllBar').hidden; };
+
+$('profileSelect').onchange=()=>operation(async()=>{
+  const id=$('profileSelect').value;
+  if(!id) return;
+  clearVehicleResults();
+  const d=await api('/api/vehicle/select','POST',{profileId:id},10000);
+  state.activeProfile=d.activeProfileId||id;
+  renderProfiles();
+  renderKline();
+});
+
+let modelRecords=[];
+let discoveryCatalog=null,lastIdentity=null;
+async function showDiscoveryPlan(){
+  if(!lastIdentity)return;
+  try{
+    if(!discoveryCatalog)discoveryCatalog=await api('/api/catalog/discovery.json','GET',null,15000);
+    let output=$('discoveryPlan');
+    if(!output){output=document.createElement('pre');output.id='discoveryPlan';$('identityPanel').append(output)}
+    const plan=buildDiscoveryPlan(discoveryCatalog,lastIdentity,modelSelections);
+    output.textContent=(lang==='tr'?'DB keşif planı — modüller bulunmuş/doğrulanmış değildir.':'DB discovery plan — modules are not detected or verified.')+'\n'+JSON.stringify({listIds:plan.listIds,genericKey:plan.genericKey,vehicleVerified:false,modules:plan.modules.map(m=>({baseId:m.baseId,name:m.name,toolkit:m.toolkit,order:m.element.order,sourceLists:m.sourceLists}))},null,2);
+  }catch(e){setActivity(e.message)}
+}
+
+const modelSelections=new Map();
+function modelCompatibility(model,selections){
+  let unknown=false;
+  for(const [group,id] of selections){
+    const values=model.attributes.filter(a=>String(a.rel_vehicle_attribute_title_id)===String(group));
+    if(!values.length){unknown=true;continue}
+    if(!values.some(a=>String(a.id)===String(id)||a.wildcard===true||a.wildcard==='true'))return 'conflict';
+  }
+  return unknown?'unknown':'compatible';
+}
+function renderModelFilters(){
+  let box=$('modelAttributeFilters');
+  if(!box){box=document.createElement('div');box.id='modelAttributeFilters';$('identityPanel').append(box)}
+  box.replaceChildren();
+  const groups=new Map();
+  for(const model of modelRecords)for(const attribute of model.attributes){
+    const group=String(attribute.rel_vehicle_attribute_title_id);
+    if(!groups.has(group))groups.set(group,new Map());
+    groups.get(group).set(String(attribute.id),attribute);
+  }
+  for(const [group,attributes] of groups){
+    const label=document.createElement('label'),select=document.createElement('select');
+    const sample=[...attributes.values()][0];
+    label.textContent=sample.short_name.split('.')[0]+' ';
+    select.setAttribute('aria-label',label.textContent.trim());
+    select.add(new Option(lang==='tr'?'Seçilmedi':'Not selected',''));
+    for(const [id,attribute] of attributes)select.add(new Option(attribute.short_name,id));
+    select.value=modelSelections.get(group)||'';
+    select.onchange=()=>{if(select.value)modelSelections.set(group,select.value);else modelSelections.delete(group);renderModelCandidates()};
+    label.append(select);box.append(label);
+  }
+}
+function renderModelCandidates(){
+  const q=$('modelFilter').value.toLocaleLowerCase(lang);
+  $('modelCandidates').replaceChildren();
+  for(const model of modelRecords){
+    if(q&&!JSON.stringify(model).toLocaleLowerCase(lang).includes(q))continue;
+    const compatibility=modelCompatibility(model,modelSelections);
+    if(compatibility==='conflict')continue;
+    const names=[...new Set(model.localized.map(x=>x.modelLabel?.[lang]||x.modelLabel?.en).filter(Boolean))];
+    const attributes=model.attributes.map(a=>a.short_name).join(' / ');
+    const evidence=compatibility==='unknown'?(lang==='tr'?' · Eksik DB niteliği':' · Missing DB attribute'):'';
+    $('modelCandidates').add(new Option((names.join(' / ')||model.manufacturer)+' · '+attributes+evidence,String(model.id)));
+  }
+  showModelDetails();
+  showDiscoveryPlan();
+}
+function showModelDetails(){const model=modelRecords.find(m=>String(m.id)===$('modelCandidates').value);$('modelDetails').hidden=!model;$('modelDetails').textContent=model?JSON.stringify({userReviewOnly:true,vehicleVerified:false,...model},null,2):''}
+$('modelFilter').oninput=renderModelCandidates;$('modelCandidates').onchange=showModelDetails;
+async function showIdentity(){
+  const identity=await api('/api/vehicle/identity');
+  lastIdentity=identity;
+  $('identityPanel').hidden=false;
+  $('identitySummary').textContent=(identity.cid||'--')+' · '+(lang==='tr'?'DB aday sayısı: ':'DB candidates: ')+(identity.candidates||[]).length;
+  $('identityCandidates').replaceChildren();
+  for(const candidate of identity.candidates||[]){$('identityCandidates').add(new Option([candidate.model||candidate.name,candidate.attributes,candidate.variantId].filter(Boolean).join(' · '),String(candidate.variantId)))}
+  if(identity.selectedVariantId) $('identityCandidates').value=String(identity.selectedVariantId);
+  $('chooseCandidate').disabled=(identity.candidates||[]).length<2;
+  const activeVarId=identity.selectedVariantId||identity.candidates?.[0]?.variantId||0;
+  if(activeVarId && $('dtcVariant')) $('dtcVariant').value=String(activeVarId);
+  renderServicesForVehicle(true);
+  if(activeVarId){
+    try{
+      state.dbLive=await api('/api/db/live','POST',{page:'0'},30000);
+      $('dbLiveStatus').textContent=state.dbLive.ok?('Variant '+state.dbLive.variantId+' · '+state.dbLive.total+' param'):(state.dbLive.error||'--');
+      renderMetrics();
+    }catch{}
+  }
+  modelRecords=identity.vehicle?.models||[];
+  modelSelections.clear();
+  renderModelFilters();
+  renderModelCandidates();
+}
+if($('filterServiceByVehicle')) $('filterServiceByVehicle').onchange=()=>renderServicesForVehicle(false);
+if($('filterCodingByVehicle')) $('filterCodingByVehicle').onchange=()=>renderCodingForVehicle();
+if($('readCodingBtn')) $('readCodingBtn').onclick=()=>operation(async()=>{
+  stopPolling();
+  $('codingLog').textContent=t('working');
+  const r=await api('/api/coding/read','POST',null,35000);
+  const st=r.states||r.decoded;
+  if(st && typeof st==='object') bcmDecodedState=st;
+  $('codingReadStatus').textContent=r.ok
+    ? ('BCM '+(r.source||r.protocol||'ONLINE')+' · '+(Object.keys(st||{}).length)+' states decoded')
+    : (r.log?.[r.log.length-1]||r.message||'No BCM response');
+  $('codingLog').textContent=(Array.isArray(r.log)?r.log.join('\n')+'\n\n':'')+JSON.stringify(r,null,2);
+  renderCodingForVehicle();
+});
+if($('immoPinPreset')) $('immoPinPreset').onchange=()=>{
+  if($('immoPinPreset').value) $('immoPinInput').value=$('immoPinPreset').value;
+  else $('immoPinInput').focus();
+};
+document.querySelectorAll('[data-immo]').forEach(btn=>{
+  btn.onclick=()=>operation(async()=>{
+    const act=btn.dataset.immo;
+    const pin=($('immoPinInput')?.value||'0895').trim();
+    const seedKey=($('immoSeedKeyInput')?.value||'').trim();
+    const writeActions=['register_key','register_remote','ecu_immo_init','steering_unlock','uds_unlock_register','delete_all_keys'];
+    if(act==='delete_all_keys'){
+      const msg1=lang==='tr'
+        ? '⚠️ ÇOK KRİTİK UYARI: Araçtaki TÜM kayıtlı Immobilizer anahtarları silinecek!\nYanınızda aracın tüm anahtarları hazır değilse araç ÇALIŞMAZ.\n\nDevam etmek istiyor musunuz?'
+        : '⚠️ CRITICAL WARNING: ALL registered Immobilizer keys in the vehicle will be ERASED!\nIf you do not have all keys ready to re-register immediately, the engine WILL NOT START.\n\nDo you want to continue?';
+      if(!confirm(msg1)) return;
+      const msg2=lang==='tr'
+        ? 'Son Onay: Tüm anahtarları silmek istediğinizden %100 emin misiniz? (PIN: '+pin+')'
+        : 'Final Confirmation: Are you 100% sure you want to erase all keys? (PIN: '+pin+')';
+      if(!confirm(msg2)) return;
+    }else if(writeActions.includes(act)){
+      const warn=lang==='tr'
+        ? 'Immobilizer / Anahtar kodlama işlemi başlatılacak.\nKontak AÇIK (motor çalışmıyor) ve tüm anahtarlar yanınızda mı?\n\nİşlem: '+btn.textContent+'\nPIN: '+pin
+        : 'Execute Immobilizer / Key programming operation?\nEnsure Ignition is ON (engine stopped) and all keys are present.\n\nOperation: '+btn.textContent+'\nPIN: '+pin;
+      if(!confirm(warn)) return;
+    }
+    stopPolling();
+    $('codingLog').textContent=t('working');
+    const r=await api('/api/immo/action','POST',{action:act,pin,seedKey},45000);
+    $('codingLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
+    if(!r.success) throw Error(r.message||'Immobilizer command failed');
+  });
+});
+$('chooseCandidate').onclick=()=>operation(async()=>{const result=await api('/api/vehicle/candidate','POST',{variantId:$('identityCandidates').value});await showIdentity();setActivity(result.message)});
+$('detect').onclick=()=>operation(async()=>{
+  stopPolling();
+  const d=await api('/api/vehicle/autodetect','POST',null,30000);
+  state.autoDetected=true;
+  if(d?.activeProfileId) state.activeProfile=d.activeProfileId;
+  await loadProfiles();
+  await showIdentity();
+  setActivity(d?.message||t('done'));
+});
+
+$('refresh').onclick=()=>operation(loadDevices);
+$('connect').onclick=()=>operation(async()=>{
+  const d=state.devices.find(x=>x.dllPath===$('deviceSelect').value);
+  if(d) await selectDevice(d.dllPath,d.name);
+});
+$('customConnect').onclick=()=>operation(async()=>{
+  const path=$('customDll').value.trim();
+  if(!/\.dll$/i.test(path)) throw Error('Invalid DLL');
+  await selectDevice(path,path.split(/[\\/]/).pop());
+});
+
+$('scan').onclick=()=>operation(async()=>{
+  state.scan=null;
+  renderScan();
+  state.scan=await api('/api/scan','POST',null,90000);
+  if(state.scan?.activeProfileId && state.scan.activeProfileId!==state.activeProfile){
+    state.activeProfile=state.scan.activeProfileId;
+    renderProfiles();
+    renderKline();
+  }
+  renderScan();
+  await showIdentity();
+});
+
+async function runService(svcKey){
+  const endpoints={
+    sas:'/api/calibrate/sas',egr:'/api/calibrate/egr',throttle:'/api/calibrate/throttle',
+    injector:'/api/calibrate/injector',dpf:'/api/calibrate/dpf',dpf_regen:'/api/calibrate/dpf_regen',
+    oil:'/api/calibrate/oil',rail_test:'/api/calibrate/rail_test',
+    f9q_ecm_replace:'/api/calibrate/f9q_ecm_replace',f9q_starter_test:'/api/calibrate/f9q_starter_test',
+    can_dpf_regen:'/api/calibrate/can_dpf_regen',can_oil_reset:'/api/calibrate/can_oil_reset',
+    can_egr_learn:'/api/calibrate/can_egr_learn',can_diesel_sensors:'/api/calibrate/can_diesel_sensors',
+    petrol_ecm:'/api/calibrate/petrol_ecm',tcm:'/api/calibrate/tcm',eps:'/api/calibrate/eps',
+    abs_bleed:'/api/calibrate/abs_bleed',bcm_airbag:'/api/calibrate/bcm_airbag',tpms:'/api/calibrate/tpms',
+    ipc:'/api/calibrate/ipc',alc:'/api/calibrate/alc',epb:'/api/calibrate/epb',hvac:'/api/calibrate/hvac',
+    shvs_hybrid:'/api/calibrate/shvs_hybrid',adas_calib:'/api/calibrate/adas_calib',clear:'/api/dtc/clear'
+  };
+  if(!confirm(t('confirmService')+t(svcKey))) return;
+  await operation(async()=>{
+    stopPolling();
+    $('serviceLog').textContent=t('working');
+    const d=await api(endpoints[svcKey],'POST',null,60000);
+    $('serviceLog').textContent=(d.message?d.message+'\n\n':'')+(Array.isArray(d.log)?d.log.join('\n'):JSON.stringify(d,null,2));
+    if(!d.success) throw Error(d.message||'Failed');
+  });
+}
+
+$('quickClear').onclick=()=>runService('clear');
+document.querySelectorAll('[data-service]').forEach(btn=>{
+  btn.onclick=()=>runService(btn.dataset.service);
+});
+
+if($('imaReadBtn')) $('imaReadBtn').onclick=()=>operation(async()=>{
+  stopPolling();
+  $('serviceLog').textContent=t('working');
+  const r=await api('/api/injector/ima','POST',{action:'read'},30000);
+  if(r.cyl1) $('imaCyl1').value=r.cyl1;
+  if(r.cyl2) $('imaCyl2').value=r.cyl2;
+  if(r.cyl3) $('imaCyl3').value=r.cyl3;
+  if(r.cyl4) $('imaCyl4').value=r.cyl4;
+  $('serviceLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
+});
+if($('imaWriteBtn')) $('imaWriteBtn').onclick=()=>operation(async()=>{
+  const cyl1=($('imaCyl1').value||'').trim().toUpperCase();
+  const cyl2=($('imaCyl2').value||'').trim().toUpperCase();
+  const cyl3=($('imaCyl3').value||'').trim().toUpperCase();
+  const cyl4=($('imaCyl4').value||'').trim().toUpperCase();
+  const msg=lang==='tr'
+    ? 'Enjektör IMA kalibrasyon kodları ECM hafızasına yazılacak ve ZFC sıfırlanacak.\nKontak AÇIK (motor çalışmıyor) mi?\n\nCyl1: '+cyl1+'\nCyl2: '+cyl2+'\nCyl3: '+cyl3+'\nCyl4: '+cyl4
+    : 'Write Injector IMA calibration codes to ECM and reset ZFC adaptation?\nEnsure Ignition is ON (engine stopped).\n\nCyl1: '+cyl1+'\nCyl2: '+cyl2+'\nCyl3: '+cyl3+'\nCyl4: '+cyl4;
+  if(!confirm(msg)) return;
+  stopPolling();
+  $('serviceLog').textContent=t('working');
+  const r=await api('/api/injector/ima','POST',{action:'write',cyl1,cyl2,cyl3,cyl4},45000);
+  $('serviceLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
+  if(!r.success) throw Error(r.message||'IMA write failed');
+});
+if($('vinReadBtn')) $('vinReadBtn').onclick=()=>operation(async()=>{
+  stopPolling();
+  $('serviceLog').textContent=t('working');
+  const r=await api('/api/vin','POST',{action:'read'},25000);
+  if(r.vin && r.vin!=='NOT_PROGRAMMED_OR_LOCKED') $('vinInput').value=r.vin;
+  $('serviceLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
+});
+if($('vinWriteBtn')) $('vinWriteBtn').onclick=()=>operation(async()=>{
+  const vin=($('vinInput').value||'').trim().toUpperCase();
+  if(vin.length!==17) throw Error(lang==='tr'?'VIN tam 17 karakter olmalıdır!':'VIN must be exactly 17 characters!');
+  const msg=lang==='tr'
+    ? '17 Haneli Şasi Numarası (VIN) ECM hafızasına yazılacak (3B 90 / 2E F1 90).\nKontak AÇIK (motor çalışmıyor) mi?\n\nVIN: '+vin
+    : 'Write 17-character VIN to ECM memory (3B 90 / 2E F1 90)?\nEnsure Ignition is ON (engine stopped).\n\nVIN: '+vin;
+  if(!confirm(msg)) return;
+  stopPolling();
+  $('serviceLog').textContent=t('working');
+  const r=await api('/api/vin','POST',{action:'write',vin},35000);
+  $('serviceLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
+  if(!r.success) throw Error(r.message||'VIN write failed');
+});
+
+async function loadDbCatalog(){
+  const baseId=parseInt($('dbCatalogBase').value||'0',10)||0;
+  const query=$('dbCatalogSearch').value.trim();
+  const data=await api('/api/db-catalog','POST',{baseId:String(baseId),query},30000);
+  const atRows=$('activeTestRows'),utRows=$('dbUtilityRows');
+  const ats=data.activeTests||[],uts=data.utilities||[];
+  $('dbCatalogCount').textContent=ats.length+' Active Test · '+uts.length+' Utility';
+  atRows.replaceChildren();
+  for(const at of ats){
+    const tr=document.createElement('tr');
+    const tName=at.testName||at.name||'';
+    const title=(lang==='tr'?(at.titleTr||at.titleEn):(at.titleEn||at.titleTr))||tName;
+    addCell(tr,title+(title!==tName?' ('+tName+')':''));
+    addCell(tr,at.bases||'--','mono');
+    addCell(tr,[at.startHex,at.stopHex].filter(Boolean).join(' / ')||'--','mono');
+    const td=document.createElement('td');
+    td.style.display='flex';td.style.gap='4px';
+    const mkBtn=(lbl,mode,cls='')=>{
+      const b=document.createElement('button');
+      b.textContent=lbl;
+      if(cls) b.className=cls;
+      b.style.padding='3px 6px';
+      b.onclick=()=>operation(async()=>{
+        stopPolling();
+        $('serviceLog').textContent=t('working');
+        const r=await api('/api/active-test/run','POST',{testName:tName,mode:mode,baseId:String(baseId)},30000);
+        $('serviceLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
+        if(!r.success) throw Error(r.message||'Failed');
+      });
+      return b;
+    };
+    td.append(mkBtn('ON','start','primary'));
+    if(at.altHex) td.append(mkBtn('ALT','alt'));
+    if(at.stopHex) td.append(mkBtn('EXIT','stop','danger'));
+    tr.append(td);
+    atRows.append(tr);
+  }
+  if(!ats.length) emptyRow(atRows,4,'Kayıt bulunamadı / No matching active tests');
+
+  utRows.replaceChildren();
+  for(const u of uts){
+    const tr=document.createElement('tr');
+    addCell(tr,u.code,'mono');
+    const title=(lang==='tr'?(u.titleTr||u.titleEn):(u.titleEn||u.titleTr))||u.script;
+    addCell(tr,title);
+    addCell(tr,u.bases||'--','mono');
+    addCell(tr,u.primaryHex||u.allHex||u.hexCmds||'Script','mono');
+    const td=document.createElement('td');
+    const b=document.createElement('button');
+    b.textContent=lang==='tr'?'Çalıştır':'Execute';
+    b.className='primary';
+    b.style.width='100%';
+    b.onclick=()=>operation(async()=>{
+      if(!confirm(t('confirmService')+u.code+' - '+title)) return;
+      stopPolling();
+      $('serviceLog').textContent=t('working');
+      const r=await api('/api/utility/run','POST',{code:u.code,baseId:String(baseId)},45000);
+      $('serviceLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
+      if(!r.success) throw Error(r.message||'Failed');
+    });
+    td.append(b);
+    tr.append(td);
+    utRows.append(tr);
+  }
+  if(!uts.length) emptyRow(utRows,5,'Kayıt bulunamadı / No matching utilities');
+}
+$('dbCatalogLoad').onclick=()=>operation(loadDbCatalog);
+$('dbCatalogBase').onchange=()=>operation(loadDbCatalog);
+$('dbCatalogSearch').onkeydown=e=>{if(e.key==='Enter') operation(loadDbCatalog);};
+
+let csvRecording=false;
+let csvRows=[];
+
+function updateCsvButtons(){
+  if($('csvRecordBtn')){
+    $('csvRecordBtn').textContent=csvRecording?t('csvRecordStop'):t('csvRecordStart');
+    $('csvRecordBtn').className=csvRecording?'danger':'';
+  }
+  if($('csvDownloadBtn')){
+    $('csvDownloadBtn').disabled=csvRows.length===0;
+    $('csvDownloadBtn').textContent=(lang==='tr'?'CSV İndir':'Download CSV')+' ('+csvRows.length+')';
+  }
+}
+
+if($('csvRecordBtn')) $('csvRecordBtn').onclick=()=>{
+  csvRecording=!csvRecording;
+  updateCsvButtons();
+};
+if($('csvDownloadBtn')) $('csvDownloadBtn').onclick=()=>{
+  if(!csvRows.length) return;
+  const headers=['timestamp','vbatt','ecmVbatt','rpm','desiredIdle','speed','coolantTemp','intakeAirTemp','fuelTemp','railPressBar','boostPress','baroPress','pedalPos','dpfSootGram','dpfTemp','dpfDiffPress','steeringAngle','yawRate','lateralG'];
+  const lines=[headers.join(',')];
+  for(const row of csvRows){
+    lines.push(headers.map(h=>row[h]??'').join(','));
+  }
+  const blob=new Blob([lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='suzuki_obd_livedata_'+new Date().toISOString().replace(/[:.]/g,'-')+'.csv';
+  a.click();
+};
+if($('exportReportBtn')) $('exportReportBtn').onclick=()=>{
+  const now=new Date().toLocaleString();
+  const mods=state.scan?.modules||[];
+  const dtcs=state.scan?.dtcs||[];
+  const veh=state.status?.detectedVehicle||profileTitle(state.activeProfile);
+  const vci=state.status?.activeDevice||'J2534 PassThru';
+  const vb=state.status?.vbatt!=null?Number(state.status.vbatt).toFixed(2)+' V':'--';
+  const modHtml=mods.map(m=>'<tr><td>'+m.id+'</td><td>'+(m.name||'')+'</td><td>'+(m.protocol||'')+' ('+(m.address||'')+')</td><td>'+(m.online?'ONLINE':'NO RESPONSE')+'</td><td>'+(m.dtcCount??0)+'</td></tr>').join('');
+  const dtcHtml=dtcs.length?dtcs.map(d=>'<tr><td><strong>'+d.code+'</strong></td><td>'+(d.module||'')+'</td><td>'+(d.description||'')+'</td><td>'+(d.checkPoint||'')+'</td></tr>').join(''):'<tr><td colspan="4">0 Trouble Codes (DTC)</td></tr>';
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>OBD Suzuki Diagnostic Report</title><style>body{font-family:Segoe UI,Arial,sans-serif;margin:24px;color:#0f172a}h1{font-size:20px;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}th,td{border:1px solid #94a3b8;padding:6px 8px;text-align:left}th{background:#e2e8f0}.meta{background:#f8fafc;border:1px solid #cbd5e1;padding:10px;margin:12px 0;font-size:13px}</style></head><body><h1>OBD Suzuki · Vehicle Diagnostic Scan Report</h1><div class="meta"><strong>Date:</strong> '+now+' &nbsp;|&nbsp; <strong>Vehicle Profile:</strong> '+veh+' &nbsp;|&nbsp; <strong>Interface:</strong> '+vci+' &nbsp;|&nbsp; <strong>Battery:</strong> '+vb+'</div><h2>Control Units ('+mods.length+')</h2><table><thead><tr><th>Module</th><th>System</th><th>Protocol / Address</th><th>Status</th><th>DTCs</th></tr></thead><tbody>'+modHtml+'</tbody></table><h2>Diagnostic Trouble Codes ('+dtcs.length+')</h2><table><thead><tr><th>Code</th><th>Module</th><th>Description</th><th>Service Check Point</th></tr></thead><tbody>'+dtcHtml+'</tbody></table></body></html>';
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='suzuki_diagnostic_report_'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.html';
+  a.click();
+};
+
+async function pollLive(){
+  if(!state.liveOn) return;
+  const gen=state.generation;
+  if(!state.busy){
+    state.busy=true;
+    updateControls();
+    try{
+      const d=await api('/api/live','GET',null,20000);
+      if(gen===state.generation){
+        state.live=d;
+        if(csvRecording && d){
+          csvRows.push(Object.assign({timestamp:new Date().toISOString()},d));
+          updateCsvButtons();
+        }
+        if(d?.activeProfileId && d.activeProfileId!==state.activeProfile){
+          state.activeProfile=d.activeProfileId;
+          renderProfiles();
+          renderKline();
+        }
+        renderMetrics();
+        $('liveStatus').textContent='ECM: '+(d.ecmOnline?'ONLINE':'--')+' | ABS: '+(d.absOnline?(d.absMode||'ONLINE'):'--')+' | '+new Date().toLocaleTimeString();
+      }
+    }catch(e){
+      state.live=null;
+      renderMetrics();
+      $('liveStatus').textContent=e.message;
+    }finally{
+      state.busy=false;
+      updateControls();
+    }
+  }
+  if(state.liveOn && gen===state.generation) state.liveTimer=setTimeout(pollLive,1500);
+}
+
+$('liveToggle').onclick=()=>{
+  if(state.liveOn){
+    stopPolling();
+  }else{
+    state.liveOn=true;
+    pollLive();
+  }
+  updateControls();
+};
+
+$('dbLiveRead').onclick=()=>operation(async()=>{
+  const page=String(Math.max(0,parseInt($('dbPage').value||'0',10)||0));
+  state.dbLive=await api('/api/db/live','POST',{page},30000);
+  $('dbLiveStatus').textContent=state.dbLive.ok?('Variant '+state.dbLive.variantId+' · '+state.dbLive.total+' param'):(state.dbLive.error||'--');
+  renderMetrics();
+});
+
+function rawResult(data){ $('rawOutput').textContent=JSON.stringify(data,null,2); }
+$('ident').onclick=()=>operation(async()=>rawResult(await api('/api/ecm/ident')));
+$('discover').onclick=()=>operation(async()=>{
+  state.rawIds=[];
+  const d=await api('/api/ecm/discover','POST',null,90000);
+  state.rawIds=Array.isArray(d.ids)?d.ids:[];
+  rawResult(d);
+});
+
+async function pollRaw(){
+  if(!state.rawOn) return;
+  const gen=state.generation;
+  if(!state.busy){
+    state.busy=true;
+    updateControls();
+    try{
+      const d=await api('/api/ecm/rawlive');
+      if(gen===state.generation) rawResult(d);
+    }catch(e){
+      rawResult({error:e.message});
+    }finally{
+      state.busy=false;
+      updateControls();
+    }
+  }
+  if(state.rawOn && gen===state.generation) state.rawTimer=setTimeout(pollRaw,1500);
+}
+
+$('rawToggle').onclick=()=>{
+  state.rawOn=!state.rawOn;
+  clearTimeout(state.rawTimer);
+  if(state.rawOn) pollRaw();
+  updateControls();
+};
+
+function renderKline(){
+  const box=$('klineButtons');
+  box.replaceChildren();
+  const targets=[
+    ['ABS / ESP (0x29)','abs'],
+    ['4WD Transfer (0x21)','4wd'],
+    ['BCM Gövde (0x5A)','bcm'],
+    ['SRS Airbag (0x59)','srs'],
+    ['KLS / IMM (0x5B)','imm'],
+    ['HVAC Klima (0x99)','ac'],
+    ['ECM Motor (0x11)','ecm'],
+    ['TCM Şanzıman (0x13)','tcm'],
+    ['EPS Direksiyon (0x31)','eps']
+  ];
+  for(const [label,target] of targets){
+    const b=document.createElement('button');
+    b.textContent=label;
+    b.onclick=()=>operation(async()=>{
+      $('klineOutput').textContent=t('working');
+      const r=await api('/api/kline/'+target,'POST');
+      $('klineOutput').textContent=JSON.stringify(r,null,2);
+    });
+    box.append(b);
+  }
+}
+
+function applyLanguage(){
+  document.documentElement.lang=lang;
+  $('language').value=lang;
+  document.querySelectorAll('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));
+  renderProfiles();
+  renderDevices();
+  renderStatus();
+  renderScan();
+  renderMetrics();
+  renderKline();
+  updateCsvButtons();
+  updateControls();
+}
+
+$('language').onchange=()=>{
+  lang=$('language').value;
+  try{localStorage.setItem('diag.language',lang)}catch{}
+  applyLanguage();
+};
+
+document.querySelectorAll('[data-tab]').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
+    document.querySelectorAll('.view').forEach(x=>x.hidden=x.id!==b.dataset.tab);
+  };
+});
+
+$('dtcReferenceRead').onclick=()=>operation(async()=>{const variantId=$('dtcVariant').value.trim()||'0',code=$('dtcReferenceCode').value.trim().toUpperCase();if(!/^\d{1,9}$/.test(variantId)||!code||code.length>32)throw Error('Invalid variant / code');$('dtcReferenceOutput').hidden=false;$('dtcReferenceOutput').textContent='';const result=await api('/api/dtc/reference','POST',{variantId,code});$('dtcReferenceOutput').textContent=(lang==='tr'?'Genişletilmiş DTC Açıklaması:':'Extended DTC Description:')+'\n'+JSON.stringify(result,null,2)});
+$('readFreezeFrame').onclick=()=>operation(async()=>{$('dtcReferenceOutput').hidden=false;$('dtcReferenceOutput').textContent=t('working');const dtcHex=$('dtcReferenceCode').value.replace(/[^0-9A-Fa-f]/g,'');const result=await api('/api/freeze-frame','POST',{dtcHex});$('dtcReferenceOutput').textContent=JSON.stringify(result,null,2)});
+async function offlineCapture(path,body){$('captureResult').textContent='';try{const result=await api(path,'POST',body);$('captureResult').textContent=JSON.stringify(result,null,2);if(!result.ok)throw Error(result.error||'Missing/invalid data')}catch(e){$('captureResult').textContent+='\n'+e.message;throw e}}
+$('captureCompute').onclick=()=>operation(()=>offlineCapture('/api/db/decode-capture',{paramId:$('captureParam').value.trim(),captures:$('captureFields').value.trim()}));
+$('captureDtcDecode').onclick=()=>operation(()=>offlineCapture('/api/dtc/decode-capture',{payload:$('captureDtc').value.replace(/\s/g,'')}));
+$('captureFfDecode').onclick=()=>operation(()=>offlineCapture('/api/freeze-frame/decode-capture',{payload:$('captureFreezeFrame').value.replace(/\s/g,'')}));
+applyLanguage();
+operation(async()=>{await loadProfiles();await loadDevices();await loadDbCatalog();}).finally(()=>pollStatus());
+</script>
+</body>
+</html>
