@@ -745,6 +745,15 @@ en:{
 const $=id=>document.getElementById(id);
 let lang='en';
 try{lang=localStorage.getItem('diag.language')==='tr'?'tr':'en'}catch{}
+try{
+  const sv=localStorage.getItem('diag.customVin');
+  if(sv && sv.length===17){
+    window.addEventListener('DOMContentLoaded',()=>{
+      if($('topbarVin')) $('topbarVin').textContent=sv;
+      if($('vinInput')) $('vinInput').value=sv;
+    });
+  }
+}catch{}
 const t=key=>dictionary[lang][key]||key;
 
 const state={busy:false,profiles:[],devices:[],activeProfile:'',scan:null,status:null,live:null,dbLive:null,liveOn:false,rawOn:false,liveTimer:null,rawTimer:null,generation:0,rawIds:[],autoDetected:false};
@@ -1497,6 +1506,14 @@ if($('imaWriteBtn')) $('imaWriteBtn').onclick=()=>operation(async()=>{
   $('serviceLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
   if(!r.success) throw Error(r.message||'IMA write failed');
 });
+if($('vinInput')) $('vinInput').oninput=()=>{
+  const val=($('vinInput').value||'').trim().toUpperCase();
+  if(val.length===17){
+    $('topbarVin').textContent=val;
+    try{localStorage.setItem('diag.customVin',val)}catch{}
+  }
+};
+
 if($('vinReadBtn')) $('vinReadBtn').onclick=()=>operation(async()=>{
   stopPolling();
   $('serviceLog').textContent=t('working');
@@ -1504,6 +1521,13 @@ if($('vinReadBtn')) $('vinReadBtn').onclick=()=>operation(async()=>{
   if(r.vin && r.vin!=='NOT_PROGRAMMED_OR_LOCKED'){
     $('vinInput').value=r.vin;
     $('topbarVin').textContent=r.vin;
+    try{localStorage.setItem('diag.customVin',r.vin)}catch{}
+  } else if(!r.vin && state.activeProfile==='gv_jb419d'){
+    const expl = lang==='tr'
+      ? '\n\nBİLGİLENDİRME (Grand Vitara 1.9 DDiS / Bosch EDC16C39 F9Q):\nSuzuki SDT-II resmi mühendislik veri tabanına göre (Base 93), bu motor kontrol ünitesi fabrikasyon olarak elektronik VIN kaydını desteklememektedir (supports_vin_registration = false).\nŞasi numaranızı yukarıdaki kutuya girerek kaydedebilir veya üst durum çubuğundaki Şasi No alanına tıklayarak girebilirsiniz.'
+      : '\n\nNOTE (Grand Vitara 1.9 DDiS / Bosch EDC16C39 F9Q):\nAccording to Suzuki SDT-II engineering specifications (Base 93), this ECM variant does not store electronic VIN in memory (supports_vin_registration = false).\nYou can manually enter your VIN in the box above or click the Chassis/VIN badge in the topbar.';
+    $('serviceLog').textContent=(r.message?r.message:'')+(Array.isArray(r.log)?'\n'+r.log.join('\n'):'')+expl;
+    return;
   }
   $('serviceLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
 });
@@ -1513,7 +1537,17 @@ if($('vinBox')) $('vinBox').onclick=()=>{
     navigator.clipboard?.writeText(cur);
     alert((lang==='tr'?'Şasi Numarası (VIN) panoya kopyalandı:\n':'VIN copied to clipboard:\n')+cur);
   } else {
-    $('vinReadBtn')?.click();
+    const input = prompt(lang==='tr'?'17 Haneli Araç Şasi Numaranızı (VIN) giriniz:':'Enter 17-character VIN:');
+    if(input){
+      const clean = input.trim().toUpperCase();
+      if(clean.length===17){
+        $('topbarVin').textContent=clean;
+        if($('vinInput')) $('vinInput').value=clean;
+        try{localStorage.setItem('diag.customVin',clean)}catch{}
+      } else {
+        alert(lang==='tr'?'Şasi numarası tam 17 karakter olmalıdır!':'VIN must be exactly 17 characters!');
+      }
+    }
   }
 };
 if($('vinWriteBtn')) $('vinWriteBtn').onclick=()=>operation(async()=>{
