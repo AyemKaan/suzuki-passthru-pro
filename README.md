@@ -134,21 +134,25 @@ Compatible with any SAE J2534-1 / J2534-2 compliant PassThru adapter running on 
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Quick Start & Download
 
-### 1. Running the Pre-Compiled Binary
-1. Connect your J2534 interface to your PC's USB port and the vehicle's OBD-II port.
-2. Turn the vehicle's **Ignition ON** (engine stopped for programming; idling for live data).
-3. Double-click `Suzuki_Diyagnostik_Baslat.bat` (or execute `suzuki_diag_server.exe`).
-4. The web dashboard will automatically open in your browser at `http://127.0.0.1:8080`.
-5. Select your J2534 interface from the dropdown list and click **Connect**.
+### 1. Pre-Compiled Standalone Release (Ready to Use)
+Download the standalone portable release archive directly from this repository:
+- **Download:** [`docs/Suzuki_OBD_Professional_v2.28.01_Beta.zip`](docs/Suzuki_OBD_Professional_v2.28.01_Beta.zip)
 
-### 2. Building from Source
-Built with Microsoft Visual C++ (MSVC 2022 / 2019 x86 toolset):
-```cmd
-build_diag.cmd
-suzuki_diag_server.exe --check-identity
-```
+**Setup Steps:**
+1. Extract the downloaded `.zip` file into any local directory.
+2. Connect your SAE J2534 PassThru interface to your computer's USB port and the car's OBD-II port.
+3. Turn the vehicle's **Ignition ON** (engine stopped for calibrations/coding; engine idling for live sensor streaming).
+4. Double-click `Suzuki_Diyagnostik_Baslat.bat` (or run `suzuki_diag_server.exe`).
+5. The diagnostic dashboard will automatically open in your default browser at `http://127.0.0.1:8080`.
+6. Select your detected J2534 interface from the dropdown list and click **Connect**.
+
+### 2. Standalone Architecture & Distribution
+- **Zero External Runtimes:** No Python, Node.js, .NET runtime, or web server installation required.
+- **Embedded Web Server:** High-speed native C++ HTTP & WebSocket server handling all ISO PassThru frame arbitration internally.
+- **Client Interface:** Single-page responsive dashboard (`index.html`) running locally with zero internet dependency.
+- **Licensing:** Distributed under the terms of [`LICENSE.md`](LICENSE.md) for personal vehicle diagnostic evaluation.
 
 ---
 

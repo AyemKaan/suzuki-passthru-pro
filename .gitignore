@@ -65,5 +65,10 @@ package.json
 # Other non-repo scratch files
 build_desktop.cmd
 suzuki_desktop.cpp
-check_db.py
+check_*.py
+patch_*.py
+update_*.py
 query_obd_db.py
+deep_vehicle_probe.*
+*_reference.html
+*.fixed.exe
