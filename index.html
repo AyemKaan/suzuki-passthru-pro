@@ -884,11 +884,36 @@ function renderCodingForVehicle(){
     } else if(bcmDecodedState && Object.prototype.hasOwnProperty.call(bcmDecodedState,item.id)){
       const curVal=bcmDecodedState[item.id];
       const curOpt=item.options.find(o=>o.val===curVal);
+      const isAktif=(curVal>0);
       const badge=document.createElement('div');
-      badge.className='tag-ok mono';
-      badge.style.fontSize='11px';
       badge.style.marginTop='3px';
-      badge.textContent=(lang==='tr'?'Mevcut Araç Ayarı: ':'Current Vehicle Setting: ')+(curOpt?(lang==='tr'?curOpt.tr:curOpt.en):String(curVal));
+      badge.style.display='flex';
+      badge.style.alignItems='center';
+      badge.style.gap='5px';
+      badge.style.fontSize='11px';
+      badge.style.fontFamily='Consolas,monospace';
+
+      const pill=document.createElement('span');
+      pill.style.padding='1px 6px';
+      pill.style.borderRadius='3px';
+      pill.style.fontWeight='700';
+      pill.style.fontSize='10px';
+      if(isAktif){
+        pill.style.background='#15803d';
+        pill.style.color='#ffffff';
+        pill.textContent=lang==='tr'?'● AÇIK / AKTİF':'● ON / ACTIVE';
+      } else {
+        pill.style.background='#64748b';
+        pill.style.color='#ffffff';
+        pill.textContent=lang==='tr'?'○ KAPALI':'○ OFF';
+      }
+      badge.append(pill);
+
+      const descSpan=document.createElement('span');
+      descSpan.style.color='#0f172a';
+      descSpan.style.fontWeight='600';
+      descSpan.textContent=(lang==='tr'?'Araç Ayarı: ':'Vehicle State: ')+(curOpt?(lang==='tr'?curOpt.tr:curOpt.en):String(curVal));
+      badge.append(descSpan);
       titleTd.append(badge);
     } else {
       const badge=document.createElement('div');
