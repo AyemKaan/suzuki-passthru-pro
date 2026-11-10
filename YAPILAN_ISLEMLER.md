@@ -17,7 +17,7 @@ Son güncelleme: 9 Kasım 2026
 
 2. **Otomatik Araç / Model Algılama ve Modele Göre Dinamik Arayüz:**
    - `suzuki_diag_server.cpp` içindeki `AutoDetectSuzukiVehicle()` fonksiyonu 500 kbps CAN (`0x7E0`) üzerinden `1A 8E`, `1A 8A`, `22 F1 01`, `22 F1 88` ve `21 80` (Bosch EDC16C39 / F9Q) kimlik sorgularını; CAN yanıtı yoksa K-Line (`0x11`, `0x7A`, `0x10`) üzerinden `1A 8E`, `1A 8A`, `1A 94` ve `21 80` sorgularını otomatik çalıştırır.
-   - Araç otomatik algılandığı (veya profil seçildiği) anda `index.html` üzerindeki 4 sekme modele göre dinamik güncellenir:
+   - Araç otomatik algılandığı (veya profil seçildiği) anda `index.html` üzerindeki 5 sekme modele göre dinamik güncellenir:
      - **1. Sekme (System Scan & DTC / Sistem Taraması):** Modele ait ECU listesi yüklenir ve `#dtcVariant` alanı otomatik olarak aracın `variantId` değeriyle doldurulur.
      - **2. Sekme (Live Data / Canlı Veri):** Benzinli / K-Line araçlarda DPF satırları gizlenir; algılanan `variantId` için Genişletilmiş Parametreler (Service 21 / 22) dinamik yüklenir.
      - **3. Sekme (Service & Calibration / Servis & Kalibrasyon):** `renderServicesForVehicle()` fonksiyonu üstteki kalibrasyon tablosunu algılanan modele uygun fonksiyonlara filtreler ve alttaki **Suzuki Aktif Testler (631) & Servis Fonksiyonları Kataloğu (570)** panelindeki `#dbCatalogBase` seçicisini algılanan `baseId` değerine (ör. F9Q için `Base 93`, CAN ECM için `Base 41`, UDS ECM için `Base 194`, K-Line ECM için `Base 64`) geçirerek o beyne ait aktif test ve servis fonksiyonlarını otomatik açar.
@@ -114,7 +114,7 @@ Son güncelleme: 9 Kasım 2026
 |---|---|
 | `suzuki_diag_server.cpp` | C++ J2534 (ISO15765 CAN + ISO14230 K-Line) HTTP sunucusu ve teşhis motoru |
 | `suzuki_diag_server.exe` | Derlenmiş 32-bit (x86) ana teşhis sunucusu |
-| `index.html` | Çift dilli (EN varsayılan, TR seçilebilir), 4 sekmeli dinamik web arayüzü |
+| `index.html` | Çift dilli (EN varsayılan, TR seçilebilir), 5 sekmeli dinamik web arayüzü |
 | `discovery-plan.js` | Modül keşif ve profil planlayıcısı |
 | `suzuki_utilities.h`, `suzuki_utilities.generated.h` | 570 servis fonksiyonu, 23 OEM kalibrasyon motoru |
 | `suzuki_active_tests.generated.h` | 631 aktüatör testi veri tablosu |
