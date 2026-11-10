@@ -5,9 +5,12 @@
 ![Suzuki OBD Professional Banner](docs/screenshots/03_service_calibrations.png)
 
 ### Professional Multi-ECU Diagnostic, Calibration, Coding & Key Programming Software for Suzuki Vehicles
+**Lead Engineer:** [Ayem Kaan Yildirim — Automotive Systems & Energy Storage Engineer](https://kaanyildirim.com/)  
 **Zero External Dependencies · Native C++ Server Engine · Standalone SAE J2534 Stack**
 
 [![Release](https://img.shields.io/badge/Release-v2.28.01--BETA-blue.svg)](https://github.com)
+[![Engineer](https://img.shields.io/badge/Engineer-Ayem%20Kaan%20Yildirim-0284c7.svg)](https://kaanyildirim.com/)
+[![Website](https://img.shields.io/badge/Website-kaanyildirim.com-10b981.svg)](https://kaanyildirim.com/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x86%20%2F%20x64)-lightgrey.svg)](https://github.com)
 [![Protocols](https://img.shields.io/badge/Protocols-ISO%2015765%20(CAN)%20%7C%20ISO%2014230%20(K--Line)%20%7C%20ISO%2014229%20(UDS)-orange.svg)](https://github.com)
 [![Hardware](https://img.shields.io/badge/Hardware-SAE%20J2534%20PassThru-success.svg)](https://github.com)
@@ -153,6 +156,15 @@ Download the standalone portable release archive directly from this repository:
 - **Embedded Web Server:** High-speed native C++ HTTP & WebSocket server handling all ISO PassThru frame arbitration internally.
 - **Client Interface:** Single-page responsive dashboard (`index.html`) running locally with zero internet dependency.
 - **Licensing:** Distributed under the terms of [`LICENSE.md`](LICENSE.md) for personal vehicle diagnostic evaluation.
+
+---
+
+## 👨‍💻 Engineering & Lead Developer
+
+Developed and engineered by **[Ayem Kaan Yildirim](https://kaanyildirim.com/)**  
+*Automotive Systems & Energy Storage Engineer*  
+- **Official Website & Portfolio:** [https://kaanyildirim.com/](https://kaanyildirim.com/)
+- **Specialization:** Automotive Embedded Diagnostics, CAN/K-Line Protocol Engineering, Battery Management Systems (BMS), Electric Vehicle Energy Storage Solutions.
 
 ---
 

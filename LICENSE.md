@@ -1,7 +1,8 @@
 PROPRIETARY SOFTWARE LICENSE AND TERMS OF USE
 =============================================
 
-Copyright (c) 2026. All Rights Reserved.
+Copyright (c) 2026 Ayem Kaan Yildirim (https://kaanyildirim.com).
+Automotive Systems & Energy Storage Engineer. All Rights Reserved.
 
 NOTICE TO USER: PLEASE READ THIS DOCUMENT CAREFULLY. BY DOWNLOADING, INSTALLING,
 OR USING ALL OR ANY PORTION OF THIS SOFTWARE ("SUZUKI OBD PROFESSIONAL"), YOU

@@ -1,5 +1,7 @@
 # Suzuki OBD Professional / J2534 Diagnostic Suite (BETA) — Güncel Durum ve Yapılan İşlemler
 
+**Geliştirici & Baş Mühendis:** [Ayem Kaan Yıldırım — Automotive Systems & Energy Storage Engineer](https://kaanyildirim.com/)  
+**Resmi Web Sitesi:** [https://kaanyildirim.com/](https://kaanyildirim.com/)  
 **Son Güncelleme:** 10 Kasım 2026  
 **Test Donanımı:** MongoosePro JLR (Drew Technologies PassThru DLL `monpj432.dll`)  
 **Doğrulanan Araç:** Suzuki Grand Vitara 1.9 DDiS (JB419D / Bosch EDC16C39 / Renault F9Q 95 kW)  
