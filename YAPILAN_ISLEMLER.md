@@ -167,7 +167,77 @@ Kullanıcının seçtiği araç profiline (`Vehicle Profile`) veya `Auto Detect`
 
 ---
 
-## 2. Güncel Dosya ve Derleme Durumu
+## 2. Araç Üzerinde Yapılan Canlı Testlerin Kapsamlı Durum Matrisi
+
+Suzuki Grand Vitara 1.9 DDiS (JB419D) aracı üzerinde bugüne kadar yapılan canlı OBD/J2534 bağlantı testleri, donanım engelleri ve bir sonraki bağlantıda sırada bekleyen işlemler aşağıda kategorize edilmiştir:
+
+### ✅ A. Canlı Araçta Denenen ve %100 Başarılı Olan Fonksiyonlar
+
+| # | Sistem / Modül | İletişim Hattı | İşlem / Servis | Sonuç ve Detay |
+| :- | :--- | :--- | :--- | :--- |
+| 1 | **Bosch EDC16C39 Motor Beyni** | CAN (ID `0x7E0`) | Özel Oturum Açma (`10 C0`) | **BAŞARILI.** Beyin `50 C0` pozitif yanıtı vererek oturumu açtı. |
+| 2 | **Motor Canlı Sensör Telemetrisi** | CAN (ID `0x7E0`) | Standart + F9Q Blokları (`21 01`, `21 A4..C0`) | **BAŞARILI.** Devir (800 RPM), Rail Basıncı (298 bar), Akü (12.1V), Soğutma Suyu (84°C), DPF Sıcaklığı/Basıncı canlı okundu. |
+| 3 | **Motor Arıza Kodu (DTC) Taraması** | CAN (ID `0x7E0`) | Arıza Okuma & Silme (`18 00 FF 00` / `14 FF 00`) | **BAŞARILI.** Aktif ve geçmiş motor arızaları listelendi. |
+| 4 | **BCM Gövde Kontrol Modülü** | K-Line Pin 7 (`0x5A`) | Suzuki 4-Baytlık ISO 14230 Oturumu | **BAŞARILI.** `0x80 0x5A 0xF1 0x02 0x10 0xC0` ile BCM oturumu açıldı. |
+| 5 | **BCM Fabrika Konfigürasyon Okuma** | K-Line Pin 7 (`0x5A`) | EEPROM Okuma (`21 08`) | **BAŞARILI.** 37 baytlık konfigürasyon paketi okundu; Alarm, Sinyal onayı, Kilit modları çözümlendi. |
+| 6 | **BCM Gizli Özellik Durum Çözümleme** | Arayüz (Sekme 5) | Canlı EEPROM Deşifresi | **BAŞARILI.** Araçtaki mevcut ayarlar sayfaya düştü (Yeşil `● AÇIK`, Gri `○ KAPALI` rozetleri). |
+| 7 | **ABS / ESP Fren Beyni Canlı Veri** | K-Line Pin 7 (`0x29`) | Telemetri Okuma (`21 00`) | **BAŞARILI.** 34 baytlık çerçeve okundu: Direksiyon Açısı (`7.0°`), Yanal İvme (`0.00 G`), Savrulma (`0.0 °/s`), Akü Voltajı (`12.10 V`). |
+| 8 | **ABS / ESP Arıza Taraması (DTC)** | K-Line Pin 7 (`0x29`) | Arıza Kodu Okuma (`18 00 FF 00`) | **BAŞARILI.** `C1021: Ön Sağ Tekerlek Hız Sensörü (Sinyal Yok / Devre Açık)` hatası anında tespit edildi. |
+| 9 | **Model Bazlı Sekme & Özellik Filtreleme** | Tüm Sekmeler (1-5) | Dinamik Profil Kısıtlama | **BAŞARILI.** Grand Vitara JB için 11 aktif özellik gösterildi, donanımda olmayan 10 özellik kilitlendi. |
+| 10 | **Şasi No (VIN) Üst Rozet & Kalıcılık** | Üst Durum Çubuğu | Topbar Badge & `localStorage` | **BAŞARILI.** Tıklanabilir, kopyalanabilir ve tarayıcıda kalıcı olarak saklanabilir hale getirildi. |
+| 11 | **Canlı Telemetri CSV Kaydı** | Arayüz (Sekme 2) | Dosyaya Loglama | **BAŞARILI.** Zaman damgalı CSV dosyası masaüstüne/indirilenlere kaydedildi. |
+
+---
+
+### ⚠️ B. Canlı Araçta Denenen Fakat Donanım / Tesisat Engeli Tespit Edilenler
+
+| # | Fonksiyon | Komut / Modül | Karşılaşılan Durum | Tespit Edilen Donanımsal / Fiziksel Engel |
+| :- | :--- | :--- | :--- | :--- |
+| 1 | **Direksiyon Açı Sensörü (SAS) Kalibrasyonu** | ABS-03 / `A5 03` (K-Line `0x29`) | Araç `7F A5 23` (NRC 0x23: Şartlar Uygun Değil) ile reddetti. | **1. Engel:** `C1021: Ön Sağ Tekerlek Hız Sensörü` arızası varken Bosch ESP sistemi güvenlik protokolü gereği kalibrasyona izin vermez.<br>**2. Engel:** Direksiyon açısı tam düz (`0.0° ± 1.5°`) değil, `7.0°` açıda duruyor. |
+| 2 | **Hız Sabitleyici (Cruise Control)** | ECM (Bosch EDC16C39) | Kadranda devreye girmiyor. | **1. Engel:** Aktif ESP lambası ve `C1021` arızası varken motor beyni hız sabitlemeyi kilitler.<br>**2. Engel:** Direksiyon zembereği (clock spring) kopukluğu veya direksiyon simidi tuş takımının iletim sorunu. |
+| 3 | **Elektronik Şasi No (VIN) Okuma** | ECM (`1A 90` / `22 F1 90` / `09 02`) | ECM yanıt vermedi ("Could not read VIN"). | **Mimari Gerçek:** Grand Vitara 1.9 DDiS (Bosch EDC16C39 - Base 93) motor beyni fabrikasyon olarak EEPROM/Flash hafızasında elektronik VIN **saklamaz** (`supports_vin_registration: false`). SDT-II yetkili cihazında da bu motorda VIN okunmaz. |
+| 4 | **Motor Beyninden Transponder ID Okuma** | ECM CAN `0x7E0` (`21 B0`) | Beyin `7F 21 12` (NRC 0x12: Sub-function not supported) döndü. | **Tesisat Gerçeği:** Kontak transponder anten bobini motor beynine değil, direksiyon altındaki **Keyless Start & Immobilizer Kontrol Modülü (33970-67J0)**'ne bağlıdır. Bu fonksiyon ECM'den değil, K-Line `0x5D` üzerinden okunmalıdır. |
+
+---
+
+### ⏳ C. Kodlanan / Düzeltilen ve Bir Sonraki OBD Bağlantısında Denenecekler
+
+Aşağıdaki fonksiyonlar offline olarak kodlanmış, derlenmiş ve test edilmek üzere hazır bekletilmektedir:
+
+1. **Keyless & İmmobilizer Modülü (K-Line Pin 7, Hedef `0x5D` - Base 70 / Base 46):**
+   - Transponder Anahtar ID Okuma (`21 B0` -> `0x5D`).
+   - Kayıtlı Anahtar Sayısı & IMMO Durumu (`21 A1` / `21 01` -> `0x5D`).
+   - PIN Kodu Doğrulama & Kumanda Tanıma (`IMMO-02`, `IMMO-03`).
+2. **BCM Gizli Özellik Değiştirme / Yazma (K-Line `0x5A` - `3B` Servisi):**
+   - BCM EEPROM okuması doğrulandı; şimdi örneğin **Hıza Duyarlı Otomatik Kilitleme (15 km/s)** veya **Eve Kadar Takip (Follow Me Home Far Süresi)** gibi bir ayarı değiştirip araca yazma testi.
+3. **Enjektör IMA Kalibrasyon Kodları Okuma & Yazma (DSL-01 / SendBatch):**
+   - Kesintisiz tek J2534 oturumunda (`10 C0` -> `21 AD`) 4 silindirin 7 haneli enjektör kodlarının çekilmesi ve gerekirse yeni kod yazılması (`3B AD FF`).
+4. **C1021 ve Direksiyon Düzeltildikten Sonra SAS Kalibrasyonu (ABS-03):**
+   - Ön sağ ABS sensör kablosu/soketi onarılıp direksiyon tam düz (`0.0°`) konuma alındıktan sonra Sekme 3'ten SAS kalibrasyonu butonuna basılarak ESP lambasının söndürülmesi testi.
+
+---
+
+### 🔬 D. İleri Seviye / İsteğe Bağlı Henüz Denenmemiş Servis ve Aktüatör Fonksiyonları
+
+Gerektiğinde araç üzerinde denenebilecek diğer gelişmiş servis fonksiyonları:
+
+- **DPF Servis Rejenerasyonu Başlatma (DSL-02 / `31 01`):** Araç durduğu yerde sabit devirde partikül filtresi kurum yakma işlemi.
+- **DPF Diferansiyel Basınç Sensörü & Kül Sıfırlama (DSL-03 / `3B 7E FD`):** DPF değişim veya temizlik sonrası adaptasyon.
+- **EGR Valfi Pozisyon Adaptasyonu (DSL-04 / `3B 7E FC`):** EGR temel ayar sıfırlama.
+- **Aktif Aktüatör Çalıştırma Testleri (Sekme 3 Kataloğu):**
+  - Yakıt Pompası Rölesi Tetikleme
+  - Radyatör Soğutma Fanı Kademe 1 & Kademe 2 Testi
+  - EGR Selenoid Valf Açma/Kapama Testi
+  - Silindir Sıkıştırma / Enjektör İptal Dengeleme Testi
+  - ABS Hidrolik Fren Valf Kanatma (Brake Bleeding) Testi
+- **4WD / Diferansiyel Kilit Modülü Taraması (K-Line `0x21`):**
+  - Transfer kutusu 4H / 4L kilit konum sensörleri ve aktüatör durum kontrolü.
+- **SRS Hava Yastığı Modülü Taraması (K-Line `0x59`):**
+  - Kaza/çarpışma kayıtları ve piroteknik kemer/yastık direnç değerlerinin okunması.
+
+---
+
+## 3. Güncel Dosya ve Derleme Durumu
 
 - **C++ Sunucu:** `suzuki_diag_server.cpp` (MSVC x86 derlemesi, 0 hata, 0 uyarı).
 - **Web Arayüzü:** `index.html` (Temiz, okunabilir, çit dilli, 5 sekmeli, optimize edilmiş arayüz).
