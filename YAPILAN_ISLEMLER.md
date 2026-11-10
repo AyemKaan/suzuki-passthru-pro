@@ -33,16 +33,20 @@
      - Akü Gerilimi: `11.84 V - 12.10 V`
      - Yanal İvme (Lateral G): `0.00 G`
      - Savrulma Oranı (Yaw Rate): `0.0 °/s`
-     - Direksiyon Açısı: `0.0°`
-     - **Sensör Durum Baytı (Offset 26):** `0x00` (Bit 6 = 0: **Sinyal Ölü / Besleme Yok / Geçersiz**).
-2. **Açının 0° Okunması ve Kalibrasyonun Reddedilmesi (NRC 0x23) Nedeni:**
-   - Yapılan tam arıza taramasında ABS/ESP beyninde aktif 4 kritik arıza tespit edildi:
-     - `C1037`: Direksiyon Açı Sensörü Güç Besleme Devresi Arızalı (Sensörde elektrik yok)
-     - `U1126`: Direksiyon Açı Sensörü ile İletişim Kesik (CAN/LIN veri hattı kopuk)
-     - `C1024`: Açı Sensörü Devre Arızası
-     - `C1075`: Direksiyon Açı Sensörü Kalibrasyonu Eksik
-   - ABS beynine K-Line Type B/C kalibrasyon komutu (`A5 01 80 00 00 00`) gönderildiğinde, beyin **`7F A5 23` (NRC 0x23: Koşullar Uygun Değil / Routine Rejected)** ile işlemi reddetmektedir.
-   - **Teşhis:** Direksiyon açı sensörü elektrik beslemesi almadığı (kopuk döner yay / direksiyon zembereği veya sigorta) için ABS beynine açı iletemez ve ABS beyni beslemesiz/iletişimsiz sensörü kalibre etmeyi güvenlik gereği reddeder.
+     - Direksiyon Açısı: `7.0°` (Direksiyon simidi sağa doğru 7 derece açıda durmaktadır)
+     - **Sensör Durum Baytı (Offset 26):** Bit 6 kontrolü ile sensör elektriksel durum tespiti.
+2. **Kalibrasyonun Reddedilmesi (NRC 0x23) ve ESP Lambasının Sönmeme Nedenleri:**
+   - Canlı araç taramasında ABS/ESP beyninde tespit edilen engeller:
+     - **Engel 1 — Tekerlek Hız Sensörü Arızası (`C1021`):** `Ön Sağ Tekerlek Hız Sensörü Sinyal Yok / Devre Açık`. Bosch 8.0 ESP sistemi, tekerlek hız sensörlerinden biri bile devre dışıyken ESP sistemini güvenlik gereği kilitler, kadranda sarı ESP lambasını sürekli yakar ve Direksiyon Açı Sensörü kalibrasyonunu `7F A5 23` ile reddeder.
+     - **Engel 2 — Direksiyon Simidi Düz Değil:** Kalibrasyon için direksiyonun kadrana göre tam `0.0° ± 1.5°` düz olması zorunludur. Araçtaki mevcut açı `7.0°` dir.
+     - **Engel 3 — Zemberek / Sigorta Durumu (`C1037 / U1126`):** Sensör soketi veya direksiyon zembereği (clock spring) kaynaklı besleme kesintisinde sensör açı verisi üretemez.
+   - **Çözüm Algoritması:** `ExecuteSASCalibration()` fonksiyonu dinamikleştirildi; kalibrasyon reddedildiğinde ABS'deki aktif DTC'leri (`C1021`, `C1037` vb.) ve mevcut direksiyon açısını canlı okuyup kullanıcıya adım adım tam Türkçe arıza ve çözüm raporu sunar.
+
+### B2. Şasi Numarası (VIN) Üst Durum Çubuğu (Topbar) Entegrasyonu
+- Arayüzün en üst header/status çubuğuna (`.status-strip`) belirgin ve tıklanabilir bir **Şasi No / VIN gösterge rozeti** (`#topbarVin`) eklendi.
+- VIN okuma fonksiyonu (`ExecuteVinActionJson`), Bosch EDC16C39 ve Suzuki CAN sistemleri için **`10 C0` oturum öncülü**, OBD-II Mode 09 PID 02, ve K-Line Pin 7 çoklu kontrol ünitesi (ECM `0x11/0x7A`, BCM `0x5A`, IMM `0x5D`) taraması ile güçlendirildi.
+- Okunan 17 haneli şasi numarası `g_cachedVin` değişkeninde hafızaya alınarak `/api/status`, `/api/live` ve `/api/scan` üzerinden anında arayüze aktarılır.
+- Üst çubuktaki Şasi No kutusuna tıklandığında VIN tek tıkla panoya (clipboard) kopyalanır.
 3. **Arayüz İyileştirmeleri:**
    - **Tab 1 (DTC):** `C1075` kodu tespit edildiğinde doğrudan satır içine **`[🎯 SAS Kalibrasyonunu Başlat (ABS-03)]`** aksiyon butonu eklendi.
    - **Tab 2 (Canlı Veri):** Canlı veri tablosuna `Direksiyon Açısı (SAS)` (`°`), `Savrulma Hızı` (`°/s`), `Yanal İvme` (`G`) ve yeni **`Direksiyon Sensörü Durumu`** parametresi eklendi. Sensörde besleme yokken kırmızı renkte `<span class="tag-fault">SİNYAL YOK / BESLEME ARIZASI (C1037)</span>` ikazı basılır.

@@ -90,6 +90,10 @@ tr:hover td{background:#e0f2fe}
       <button id="detect" class="primary" data-i="detect">Auto Detect</button>
     </div>
     <div class="status-strip">
+      <div class="stat-box" id="vinBox" title="Chassis Number / Şase No (17-Ch VIN) · Kopyalamak için tıklayınız" style="background:#090d16;border:1px solid #334155;cursor:pointer;padding:2px 8px">
+        <span style="color:#94a3b8;font-size:11px" data-i="topbarVinLabel">Şasi No (VIN):</span>
+        <strong id="topbarVin" class="mono" style="color:#38bdf8;font-size:12px;letter-spacing:0.8px">--</strong>
+      </div>
       <div class="stat-box"><span id="connLed" class="led"></span><strong id="connection">--</strong></div>
       <div class="stat-box"><span>KL30:</span><strong id="voltage">-- V</strong></div>
       <select id="language" style="min-width:64px;height:24px;background:#0f172a;color:#fff;border-color:#475569">
@@ -622,7 +626,7 @@ tr:{
   colCode:'Kod',colDesc:'Arıza Açıklaması',colRef:'Servis Kontrol Noktası',
   startLive:'Canlı Veriyi Başlat',stopLive:'Canlı Veriyi Durdur',csvRecordStart:'CSV Kaydı Başlat',csvRecordStop:'CSV Kaydını Durdur',dbPageLabel:'DB Sayfa:',dbReadBtn:'DB Parametre Oku',
   imaBarTitle:'Enjektör IMA Kodlama (Silindir 1–4):',imaReadBtn:'IMA Oku (21 AD)',imaWriteBtn:'IMA Yaz & ZFC Sıfırla (3B AD)',
-  vinBarTitle:'Şasi No (17 Hane VIN):',vinReadBtn:'VIN Oku (1A 90 / 22 F1 90)',vinWriteBtn:'ECM VIN Yaz (3B 90)',
+  vinBarTitle:'Şasi No (17 Hane VIN):',vinReadBtn:'VIN Oku (1A 90 / 22 F1 90)',vinWriteBtn:'ECM VIN Yaz (3B 90)',topbarVinLabel:'Şasi No (VIN):',
   dbCatalogFilterTitle:'Suzuki OBD Aktif Test (631) & Servis Fonksiyonu (570) Kataloğu:',allBasesOpt:'Tüm ECU Sistemleri (All Bases)',dbCatalogLoadBtn:'Kataloğu Filtrele / Yükle',
   activeTestTableTitle:'Suzuki OBD Aktif Testler (Actuator Test · 631 Test · Servis 0x30 / 0x2F)',dbUtilityTableTitle:'Suzuki OBD Servis Fonksiyonları (570 Utility · Doğrudan ECU Çalıştırma)',
   colActName:'Aktüatör / Test Adı',colControl:'Kontrol',
@@ -691,7 +695,7 @@ en:{
   colCode:'Code',colDesc:'Fault Description',colRef:'Service Check Point',
   startLive:'Start Live Data',stopLive:'Stop Live Data',csvRecordStart:'Record CSV Log',csvRecordStop:'Stop CSV Recording',dbPageLabel:'DB Page:',dbReadBtn:'Read DB Page',
   imaBarTitle:'Injector IMA (Cyl 1–4):',imaReadBtn:'Read IMA (21 AD)',imaWriteBtn:'Write IMA & ZFC Reset (3B AD)',
-  vinBarTitle:'VIN (17-Ch):',vinReadBtn:'Read VIN (1A 90 / 22 F1 90)',vinWriteBtn:'Write VIN (3B 90)',
+  vinBarTitle:'VIN (17-Ch):',vinReadBtn:'Read VIN (1A 90 / 22 F1 90)',vinWriteBtn:'Write VIN (3B 90)',topbarVinLabel:'VIN / Chassis:',
   dbCatalogFilterTitle:'Suzuki OBD Active Tests (631) & Service Functions (570) Catalog:',allBasesOpt:'All ECU Systems (All Bases)',dbCatalogLoadBtn:'Filter / Load Catalog',
   activeTestTableTitle:'Suzuki OBD Active Tests (Actuator Test · 631 Tests · Service 0x30 / 0x2F)',dbUtilityTableTitle:'Suzuki OBD Service Functions (570 Utilities · Direct ECU Execution)',
   colActName:'Actuator / Test Name',colControl:'Control',
@@ -1017,6 +1021,10 @@ function renderStatus(){
   $('connection').textContent=s?(on?t('ready'):t('offline')):t('unavailable');
   $('voltage').textContent=Number.isFinite(s?.voltage)?s.voltage.toFixed(2)+' V':'-- V';
   $('firmware').textContent=[s?.activeDeviceName||s?.activeName,s?.fw].filter(Boolean).join(' · ')||'--';
+  if(s?.vin && s.vin !== 'NOT_PROGRAMMED_OR_LOCKED'){
+    $('topbarVin').textContent = s.vin;
+    if($('vinInput') && !$('vinInput').value) $('vinInput').value = s.vin;
+  }
 }
 
 function renderScan(){
@@ -1027,6 +1035,10 @@ function renderScan(){
     emptyRow(m,5,t('notRead'));
     emptyRow(d,4,t('notRead'));
     return;
+  }
+  if(state.scan?.vin && state.scan.vin !== 'NOT_PROGRAMMED_OR_LOCKED'){
+    $('topbarVin').textContent = state.scan.vin;
+    if($('vinInput') && !$('vinInput').value) $('vinInput').value = state.scan.vin;
   }
   const mods=state.scan.modules||[];
   const dtcs=state.scan.dtcs||[];
@@ -1489,9 +1501,21 @@ if($('vinReadBtn')) $('vinReadBtn').onclick=()=>operation(async()=>{
   stopPolling();
   $('serviceLog').textContent=t('working');
   const r=await api('/api/vin','POST',{action:'read'},25000);
-  if(r.vin && r.vin!=='NOT_PROGRAMMED_OR_LOCKED') $('vinInput').value=r.vin;
+  if(r.vin && r.vin!=='NOT_PROGRAMMED_OR_LOCKED'){
+    $('vinInput').value=r.vin;
+    $('topbarVin').textContent=r.vin;
+  }
   $('serviceLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
 });
+if($('vinBox')) $('vinBox').onclick=()=>{
+  const cur = $('topbarVin').textContent.trim();
+  if(cur && cur !== '--'){
+    navigator.clipboard?.writeText(cur);
+    alert((lang==='tr'?'Şasi Numarası (VIN) panoya kopyalandı:\n':'VIN copied to clipboard:\n')+cur);
+  } else {
+    $('vinReadBtn')?.click();
+  }
+};
 if($('vinWriteBtn')) $('vinWriteBtn').onclick=()=>operation(async()=>{
   const vin=($('vinInput').value||'').trim().toUpperCase();
   if(vin.length!==17) throw Error(lang==='tr'?'VIN tam 17 karakter olmalıdır!':'VIN must be exactly 17 characters!');
@@ -1634,6 +1658,10 @@ async function pollLive(){
       const d=await api('/api/live','GET',null,20000);
       if(gen===state.generation){
         state.live=d;
+        if(d?.vin && d.vin !== 'NOT_PROGRAMMED_OR_LOCKED'){
+          $('topbarVin').textContent = d.vin;
+          if($('vinInput') && !$('vinInput').value) $('vinInput').value = d.vin;
+        }
         if(csvRecording && d){
           csvRows.push(Object.assign({timestamp:new Date().toISOString()},d));
           updateCsvButtons();
