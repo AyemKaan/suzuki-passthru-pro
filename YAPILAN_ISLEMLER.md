@@ -112,6 +112,25 @@ Aracın BCM beyninden okunan gerçek `rawHex` ve SDT-II veritabanı (`BCM-06`, `
   2. **Model Filtreleme Onay Kutusu:** Tablonun üstündeki filtre işaretlendiğinde sadece o araca uyan özellikler gösterilir (Grand Vitara için 11 özellik).
   3. **C++ Sunucu Güvenlik Kilidi (`ExecuteHiddenFeatureCoding`):** Backend seviyesinde de aktif araç profili kontrol edilir. Uyumsuz bir kodlama talebi geldiğinde sunucu donanım güvenliği gereği işlemi reddederek `FEATURE_NOT_SUPPORTED` hatası döndürür.
 
+### H. Tüm 5 Sekmede Uçtan Uca Modele Özel Çalışma Mimarisi (Kritik Güvenlik)
+Kullanıcının seçtiği araç profiline (`Vehicle Profile`) veya `Auto Detect` sonucu tespit edilen ECU kimliğine göre 5 sekmenin tamamı modele uyum sağlar:
+1. **Sekme 1 (Sistem Taraması & DTC):** `GetActiveSuzukiModules()` fonksiyonu Grand Vitara 1.9 DDiS için sadece JB mimarisindeki 9 modülü (F9Q CAN ECM, ABS/ESP 0x29 K-Line, 4WD 0x21, BCM 0x5A vb.) hedefler. Yeni Suzuki CAN için 13 UDS modülü taranır.
+2. **Sekme 2 (Canlı Veri & Telemetri):** Benzinli (`gv_petrol`) ve klasik K-Line (`suzuki_kline`) profillerinde dizel parametreleri (DPF Kurum Miktarı, DPF Sıcaklığı, DPF Diferansiyel Basıncı) tablodan otomatik olarak gizlenir. Bosch F9Q blokları (`21 A4..C0`) sadece dizel Grand Vitara'da çalışır.
+3. **Sekme 3 (Servis & Kalibrasyon):** 27 adet kalibrasyon kartı `filterServiceByVehicle` ile modele göre filtrelenir; F9Q Enjektör IMA, DPF ve EGR adaptasyonları sadece uyumlu araçta açılır. 631 Aktif Test ve 570 Servis Fonksiyonu kataloğu otomatik olarak Grand Vitara için **Base 93**, CAN için **Base 41**, K-Line için **Base 64** veritabanına bağlanır.
+4. **Sekme 4 (ECU Kimlik & K-Line):** Suzuki 4-baytlık K-Line ISO 14230 protokolü üzerinden Pin 7 üniteleri doğrudan hedeflenir.
+5. **Sekme 5 (Gizli Özellikler & BCM Kodlama):** Uyumsuz olan tüm özellikler devre dışı bırakılır (`disabled`), araç beynine yanlış komut yazılması hem frontend hem C++ backend katmanında engellenir.
+
+---
+
+### I. BCM Kodlamasının Sayfaya Canlı Düşmesi ve Görsel Durum Rozetleri
+- **Özellik Okuma:** `Mevcut Araç Kodlamasını Oku (21 08 / 21 01)` butonuna tıklandığında, araç beyninden okunan ham EEPROM baytları (`states`) anında çözümlenir.
+- **Canlı Görsel Gösterim:**
+  - Açık / Aktif olan özellikler: Yeşil renkli `● AÇIK / AKTİF` rozeti ve araçtaki tam ayar açıklaması (`Araç Ayarı: AÇIK`).
+  - Kapalı / Pasif olan özellikler: Gri renkli `○ KAPALI` rozeti (`Araç Ayarı: KAPALI`).
+  - Açılır kutu (`<select>`) otomatik olarak aracın o anki değerini seçili hale getirir.
+  - Modelde donanımı olmayan özellikler: Kırmızı renkli `❌ BU MODELDE DONANIM / BCM DESTEĞİ YOK (KAPALI)` rozeti ve kilitli (`disabled`) buton ile gösterilir.
+- **K-Line BCM-06 Genişletilmiş Çözümleme:** Grand Vitara JB Pin 7 BCM'inden okunan 37 baytlık `21 08` paketindeki Alarm, Kilitleme Sinyal Onayı, Hıza Duyarlı Kilit, Kontak Kapatınca Açma, Tek Basış Açma Modu, Bip Sesi (Buzzer), Follow Me Home, Tavan Lambası Dimmer ve Cam Kaldırma süreleri eksiksiz olarak çözümlenmektedir.
+
 ---
 
 ## 2. Güncel Dosya ve Derleme Durumu

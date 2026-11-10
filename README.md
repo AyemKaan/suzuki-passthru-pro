@@ -106,18 +106,10 @@ All 5 core functional modules have been captured directly from the live applicat
 - Local ID scanner (`21 01` .. `21 FE`) and offline hex packet decoder.
 
 ### 5. Hidden Features, BCM Coding & Immobilizer Key Programming (Tab 5)
-- **21 Model-Specific Hidden Features (BCM Coding):**
-  - Read existing BCM state via `21 08` / `21 01` (CAN `0x7E4` / K-Line `0x5A`).
-  - Auto door locking (speed-dependent @ 15 km/h or shift lever P-linked).
-  - Auto door unlock (ignition OFF or shift lever P-linked).
-  - Daytime Running Lights (`DRL`) enable/disable.
-  - Comfort turn signals (lane-change 2, 3, or 4 flashes).
-  - Auto folding mirrors on lock.
-  - Cornering fog lamps.
-  - Factory security alarm activation.
-  - Acoustic buzzer / horn lock answerback.
-  - Guide-me-home & welcome lighting timers.
-  - ESP Dyno / Off-road full deactivation mode.
+- **Model-Specific BCM Coding & Safety Locks:**
+  - **Dynamic Compatibility Filter:** Features not present in the vehicle's electrical architecture (e.g., auto folding mirrors, cornering fogs, comfort lane flash on Grand Vitara JB) are automatically disabled, locked (`disabled`), and prevented from executing by dual-layer safety locks.
+  - **Live EEPROM State Readout (`21 08` / `21 01`):** Reads active vehicle coding and instantly highlights feature states with high-visibility badges (`● ON / ACTIVE` vs `○ OFF / DISABLED`), automatically pre-selecting current parameters in dropdowns.
+  - **21 Cataloged Functions:** Speed-dependent auto locking (15 km/h), auto unlock on IG-OFF / Shift-P, 1-press vs 2-stage unlock, interior dimmer fade timer, retained power window timer, factory security alarm, lock answerback (hazard flash vs interior dome light), acoustic buzzer, follow-me-home headlight delay, and ESP Dyno / Off-road full deactivation mode.
 - **Immobilizer & Key Programming (`IMMO-01..207`):**
   - **Safe Read-Only Operations:** Key count & date (`21 A1`), Transponder chip ID (`21 B0`), Direct EEPROM PIN read (`10 C0 -> 21 21`), Keyless interior antenna check.
   - **4-Digit PIN Operations:** Presets (`0895`, `9502`, `5634`, `0325`), Safe PIN test, Transponder key registration (`30 A1 80` / `A5 A1 80`), Remote fob programming (`A5 A1 20` / `30 62 07`), ECM-Immobilizer sync, Electronic Steering Lock (`ESL`) unlock, and Double-confirmed erase all keys.
