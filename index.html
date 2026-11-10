@@ -509,9 +509,10 @@ tr:hover td{background:#e0f2fe}
           <button id="readCodingBtn" class="primary" data-i="readCodingBtn">Read Current Vehicle Coding (21 08 / 21 01)</button>
           <label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer;background:#e2e8f0;padding:4px 8px;border:1px solid #94a3b8">
             <input type="checkbox" id="filterCodingByVehicle" checked>
-            <span id="codingFilterBadge">Filter by Model</span>
+            <span id="codingFilterBadge">Sadece Uyumlu Özellikleri Göster</span>
           </label>
         </div>
+        <span id="codingModelSummary" class="mono" style="font-size:11.5px;font-weight:700;color:#0284c7">--</span>
         <span id="codingReadStatus" class="mono" style="font-size:11px;color:#475569">BCM: 0x7E4 (CAN) / 0x5A (K-Line Pin 7) · UDS 0x745</span>
       </div>
       <div class="split">
@@ -819,27 +820,27 @@ function renderServicesForVehicle(autoSyncBase=false){
 }
 
 const hiddenFeaturesCatalog=[
-  {id:'HF-DRL',code:'BCM 30 36 / 3B 3F',profiles:['gv_jb419d','suzuki_can','gv_petrol','suzuki_kline'],titleEn:'Daytime Running Lights (DRL) Activation',titleTr:'Gündüz Sürüş Farı (DRL) Aktivasyonu / İptali',modelsEn:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny JB74 (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny JB74 (CAN BCM)',options:[{val:1,en:'ON (DRL Enabled)',tr:'AÇIK (DRL Aktif)'},{val:0,en:'OFF (DRL Disabled)',tr:'KAPALI (DRL İptal)'}]},
-  {id:'HF-AUTOLOCK',code:'BCM 30 35 / 3B 2F',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Speed / Shift Linked Auto Door Lock',titleTr:'Hıza (15 km/s) veya Vitese Duyarlı Otomatik Kapı Kilitleme',modelsEn:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',modelsTr:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',options:[{val:1,en:'Speed Responsive (15 km/h)',tr:'Hıza Duyarlı (15 km/s Üzeri Kilitle)'},{val:2,en:'Shift Lever Linked (Out of P)',tr:'Vites (P Konumundan Çıkınca Kilitle)'},{val:0,en:'OFF (Disabled)',tr:'KAPALI (Devre Dışı)'}]},
-  {id:'HF-AUTOUNLOCK',code:'BCM 30 35 / 3B 02',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Ignition OFF / Shift-P Auto Door Unlock',titleTr:'Kontak Kapatınca (IG OFF) veya P Vitesinde Otomatik Kilit Açma',modelsEn:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',modelsTr:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',options:[{val:1,en:'Ignition OFF Linked Unlock',tr:'Kontak Kapatınca (IG OFF) Otomatik Aç'},{val:2,en:'Shift-P Linked Unlock (AT/CVT)',tr:'P Vitesine Alınca Otomatik Aç'},{val:0,en:'OFF (Disabled)',tr:'KAPALI (Devre Dışı)'}]},
-  {id:'HF-LANEFLASH',code:'BCM 30 35 08 20',profiles:['suzuki_can','gv_petrol'],titleEn:'Comfort Turn Signal (Lane Change Flash Count)',titleTr:'Konfor Sinyali (Tek Dokunuş Şerit Değiştirme Sinyal Sayısı)',modelsEn:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny (CAN BCM)',options:[{val:3,en:'4 Flashes (+3 Comfort)',tr:'4 Kez Yanıp Sönme (+3 Konfor)'},{val:2,en:'3 Flashes (+2 Standard)',tr:'3 Kez Yanıp Sönme (+2 Standart)'},{val:1,en:'2 Flashes (+1 Short)',tr:'2 Kez Yanıp Sönme (+1 Kısa)'},{val:0,en:'OFF (Single Flash)',tr:'KAPALI (Tek Sinyal)'}]},
+  {id:'HF-ALARM',code:'BCM 30 34 / 30 09 / 3B 21',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Factory Security Anti-Theft Alarm System',titleTr:'Fabrika Hırsızlık Önleme (Security Alarm) Sistemi Aktivasyonu',modelsEn:'Grand Vitara (1.9 DDiS / Petrol), Swift, SX4, Vitara (CAN + K-Line 0x5A)',modelsTr:'Grand Vitara (1.9 DDiS / Benzinli), Swift, SX4, Vitara (CAN + K-Line 0x5A)',options:[{val:1,en:'ON (Factory Alarm Armed)',tr:'AÇIK (Fabrika Alarmı Aktif)'},{val:0,en:'OFF (Alarm Disarmed)',tr:'KAPALI (Fabrika Alarmı Devre Dışı)'}]},
+  {id:'HF-ANSWERLIGHT',code:'BCM 30 35 / 30 10',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Lock / Unlock Visual Answerback (Hazard vs Dome Light)',titleTr:'Kilitleme / Açma Görsel Onay (Dörtlü Sinyal vs Tavan Lambası)',modelsEn:'Grand Vitara JB (CAN/K-Line 0x5A), Swift, SX4, Vitara',modelsTr:'Grand Vitara JB (CAN/K-Line 0x5A), Swift, SX4, Vitara',options:[{val:0,en:'Hazard Warning Turn Signals Flash',tr:'Dörtlü Sinyaller Yanıp Söner (Standart)'},{val:1,en:'Interior Dome Lamp Only (Stealth Lock)',tr:'Sadece İç Tavan Lambası (Dış Sinyal Çakmaz)'}]},
+  {id:'HF-AUTOLOCK',code:'BCM 30 35 / 3B 2F',profiles:['gv_jb419d','gv_petrol','suzuki_can'],titleEn:'Speed / Shift Linked Auto Door Lock (15 km/h)',titleTr:'Hıza (15 km/s) veya Vitese Duyarlı Otomatik Kapı Kilitleme',modelsEn:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',modelsTr:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',options:[{val:1,en:'Speed Responsive (15 km/h)',tr:'Hıza Duyarlı (15 km/s Üzeri Kilitle)'},{val:2,en:'Shift Lever Linked (Out of P)',tr:'Vites (P Konumundan Çıkınca Kilitle)'},{val:0,en:'OFF (Disabled)',tr:'KAPALI (Devre Dışı)'}]},
+  {id:'HF-AUTOUNLOCK',code:'BCM 30 35 / 3B 02',profiles:['gv_jb419d','gv_petrol','suzuki_can'],titleEn:'Ignition OFF / Shift-P Auto Door Unlock',titleTr:'Kontak Kapatınca (IG OFF) veya P Vitesinde Otomatik Kilit Açma',modelsEn:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',modelsTr:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',options:[{val:1,en:'Ignition OFF Linked Unlock',tr:'Kontak Kapatınca (IG OFF) Otomatik Aç'},{val:2,en:'Shift-P Linked Unlock (AT/CVT)',tr:'P Vitesine Alınca Otomatik Aç'},{val:0,en:'OFF (Disabled)',tr:'KAPALI (Devre Dışı)'}]},
+  {id:'HF-UNLOCKMODE',code:'BCM 30 3B / 3B 63',profiles:['gv_jb419d','gv_petrol','suzuki_can'],titleEn:'Remote / Keyless Door Unlock Behavior (1-Press vs 2-Press)',titleTr:'Kumandadan Kilit Açma Modu (Tek Basış Tüm Kapılar / İki Aşamalı)',modelsEn:'Grand Vitara JB, Vitara, S-Cross, Swift, Baleno',modelsTr:'Grand Vitara JB, Vitara, S-Cross, Swift, Baleno',options:[{val:0,en:'1-Press: Unlock All Doors Immediately',tr:'Tek Basışta Tüm Kapıları Aç'},{val:1,en:'2-Press: Driver Door First, Then All',tr:'2 Aşamalı (Önce Sürücü, 2. Basışta Tümü)'}]},
+  {id:'HF-ROOMLAMP',code:'BCM 3B 16 / 3B 17',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Interior Dome Lamp Fade-Out & IG-OFF Delay Timer',titleTr:'İç Tavan Lambası Sönme Gecikmesi (Dimmer Timer)',modelsEn:'Grand Vitara JB (1.9 DDiS / Petrol), Swift, SX4, Jimny (K-Line/CAN)',modelsTr:'Grand Vitara JB (1.9 DDiS / Benzinli), Swift, SX4, Jimny (K-Line/CAN)',options:[{val:2,en:'2.0 Seconds Fade',tr:'2.0 Saniye Gecikmeli Sönme'},{val:3,en:'3.0 Seconds Fade',tr:'3.0 Saniye Gecikmeli Sönme'},{val:1,en:'1.0 Second Fade',tr:'1.0 Saniye Gecikmeli Sönme'},{val:0,en:'0.5 Second Fast Fade',tr:'0.5 Saniye Hızlı Sönme'},{val:4,en:'Immediate OFF (0 sec)',tr:'Anında Sönme (0 sn)'}]},
+  {id:'HF-RETAINEDPWR',code:'BCM 3B 27',profiles:['gv_jb419d','gv_petrol','suzuki_can'],titleEn:'Retained Power Window Operation After Ignition OFF',titleTr:'Kontak Kapandıktan Sonra Cam Kaldırma Yetkisi Süresi',modelsEn:'Grand Vitara JB (1.9 DDiS / Petrol), Swift, SX4, Jimny',modelsTr:'Grand Vitara JB (1.9 DDiS / Benzinli), Swift, SX4, Jimny',options:[{val:2,en:'Extended Timer (Mode 2)',tr:'Uzatılmış Süre (Mod 2)'},{val:1,en:'Standard Timer (Mode 1)',tr:'Standart Süre (Mod 1)'},{val:0,en:'OFF (Immediate Cut on IG-OFF)',tr:'KAPALI (Kontak Kapanınca Kes)'}]},
+  {id:'HF-AUTOLIGHT-HW',code:'BCM 3B 3A / 33 / 34',profiles:['gv_jb419d','gv_petrol'],titleEn:'Auto Headlight Sensor & Keyless Hardware Retrofit Coding',titleTr:'Otomatik Far Sensörü & Keyless Donanım (Retrofit) Kodlaması',modelsEn:'Grand Vitara JB (1.9 DDiS / Petrol), Swift RS, SX4 (BCM 103..118)',modelsTr:'Grand Vitara JB (1.9 DDiS / Benzinli), Swift RS, SX4 (BCM 103..118)',options:[{val:1,en:'Enable Auto Light Sensor (3B 3A 06)',tr:'Otomatik Far Sensörünü Aktif Et (3B 3A 06)'},{val:0,en:'Disable Auto Light Sensor (3B 3A 04)',tr:'Otomatik Far Sensörünü Kapat (3B 3A 04)'},{val:2,en:'Enable Keyless Push-Start (3B 33 00)',tr:'Keyless Anahtarsız Çalıştırma Aktif (3B 33 00)'},{val:3,en:'Enable I-Key System (3B 34 01)',tr:'I-Key Akıllı Anahtar Aktif (3B 34 01)'}]},
+  {id:'HF-BUZZER',code:'BCM 30 33 / 3B 2B',profiles:['gv_jb419d','gv_petrol','suzuki_can'],titleEn:'Lock / Unlock Acoustic Answerback (Buzzer / Horn / Siren)',titleTr:'Kapı Kilitleme / Açma Sesli Onay (Buzzer / Korna / Siren Sesi)',modelsEn:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',modelsTr:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',options:[{val:1,en:'ON (Keyless Buzzer Beep)',tr:'AÇIK (Keyless Buzzer Bip Sesi)'},{val:0,en:'OFF (Silent Lock/Unlock)',tr:'KAPALI (Sessiz Kilitleme/Açma)'},{val:2,en:'Horn Chirp Answerback ON',tr:'Korna Uyarı Sesi AÇIK'},{val:3,en:'Siren Chirp Answerback ON',tr:'Siren Uyarı Sesi AÇIK'}]},
+  {id:'HF-FOLLOWHOME',code:'BCM 30 3B 08 02 / 3B 39',profiles:['gv_jb419d','gv_petrol','suzuki_can'],titleEn:'Guide Me Home / Follow Me Home Headlight Timer',titleTr:'Eve Kadar Takip (Follow Me Home) Far Gecikme Süresi',modelsEn:'Grand Vitara JB, Vitara, S-Cross, Swift CAN',modelsTr:'Grand Vitara JB, Vitara, S-Cross, Swift CAN',options:[{val:0,en:'OFF (0 sec)',tr:'KAPALI (0 sn)'},{val:1,en:'10 Seconds',tr:'10 Saniye'},{val:2,en:'15 Seconds',tr:'15 Saniye'},{val:3,en:'20 Seconds',tr:'20 Saniye'},{val:4,en:'25 Seconds',tr:'25 Saniye'},{val:5,en:'30 Seconds',tr:'30 Saniye'}]},
+  {id:'HF-ESP-DYNO',code:'ABS 30 80 07 04',profiles:['gv_jb419d','gv_petrol','suzuki_can'],titleEn:'ESP Off-Road / Dyno Roller Test Mode (Temporary ESP Full Off)',titleTr:'ESP Off-Road / Dyno Test Modu (ESP Tam Devre Dışı Bırakma)',modelsEn:'Grand Vitara JB (ESP), Swift Sport, SX4, Vitara (ABS-04)',modelsTr:'Grand Vitara JB (ESP), Swift Sport, SX4, Vitara (ABS-04)',options:[{val:1,en:'Activate ESP Dyno / Off-Road Mode (30 80 07 04 04)',tr:'ESP Tam Devre Dışı Modunu Aç (30 80 07 04 04)'},{val:0,en:'Restore Normal ESP Operation (30 80 07 04 00)',tr:'Normal ESP Moduna Geri Dön (30 80 07 04 00)'}]},
+  {id:'HF-DRL',code:'BCM 30 36 / 3B 3F',profiles:['suzuki_can'],titleEn:'Daytime Running Lights (DRL) Activation',titleTr:'Gündüz Sürüş Farı (DRL) Aktivasyonu / İptali',modelsEn:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny JB74 (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny JB74 (CAN BCM)',options:[{val:1,en:'ON (DRL Enabled)',tr:'AÇIK (DRL Aktif)'},{val:0,en:'OFF (DRL Disabled)',tr:'KAPALI (DRL İptal)'}]},
+  {id:'HF-LANEFLASH',code:'BCM 30 35 08 20',profiles:['suzuki_can'],titleEn:'Comfort Turn Signal (Lane Change Flash Count)',titleTr:'Konfor Sinyali (Tek Dokunuş Şerit Değiştirme Sinyal Sayısı)',modelsEn:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno, Ignis, Jimny (CAN BCM)',options:[{val:3,en:'4 Flashes (+3 Comfort)',tr:'4 Kez Yanıp Sönme (+3 Konfor)'},{val:2,en:'3 Flashes (+2 Standard)',tr:'3 Kez Yanıp Sönme (+2 Standart)'},{val:1,en:'2 Flashes (+1 Short)',tr:'2 Kez Yanıp Sönme (+1 Kısa)'},{val:0,en:'OFF (Single Flash)',tr:'KAPALI (Tek Sinyal)'}]},
   {id:'HF-MIRROR',code:'BCM 30 33 08 20',profiles:['suzuki_can'],titleEn:'Auto Folding Side Mirrors on Door Lock',titleTr:'Kumandadan Kilitleyince Otomatik Katlanır Yan Aynalar',modelsEn:'Vitara, S-Cross, Swift AZG/A2L, Baleno (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift AZG/A2L, Baleno (CAN BCM)',options:[{val:1,en:'ON (Fold on Lock)',tr:'AÇIK (Kilitleyince Katla)'},{val:0,en:'OFF (Manual Fold Button Only)',tr:'KAPALI (Sadece İç Tuşla Katla)'}]},
   {id:'HF-CORNER',code:'BCM 30 31 08 04',profiles:['suzuki_can'],titleEn:'Cornering Fog Lights (Steering / Turn Linked)',titleTr:'Dönüşe Duyarlı Viraj Aydınlatma Sis Farları (Cornering Light)',modelsEn:'Vitara, S-Cross, Swift, Baleno (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno (CAN BCM)',options:[{val:1,en:'ON (Cornering Fog Active)',tr:'AÇIK (Viraj Sis Farı Aktif)'},{val:0,en:'OFF (Disabled)',tr:'KAPALI (Devre Dışı)'}]},
-  {id:'HF-BUZZER',code:'BCM 30 33 / 3B 2B',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Lock / Unlock Acoustic Answerback (Buzzer / Horn / Siren)',titleTr:'Kapı Kilitleme / Açma Sesli Onay (Buzzer / Korna / Siren Sesi)',modelsEn:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',modelsTr:'Grand Vitara JB, Swift, SX4, Vitara, S-Cross (CAN + K-Line)',options:[{val:1,en:'ON (Keyless Buzzer Beep)',tr:'AÇIK (Keyless Buzzer Bip Sesi)'},{val:0,en:'OFF (Silent Lock/Unlock)',tr:'KAPALI (Sessiz Kilitleme/Açma)'},{val:2,en:'Horn Chirp Answerback ON',tr:'Korna Uyarı Sesi AÇIK'},{val:3,en:'Siren Chirp Answerback ON',tr:'Siren Uyarı Sesi AÇIK'}]},
-  {id:'HF-ALARM',code:'BCM 30 34 / 30 09 / 3B 21',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Factory Security Anti-Theft Alarm System',titleTr:'Fabrika Hırsızlık Önleme (Security Alarm) Sistemi Aktivasyonu',modelsEn:'Grand Vitara 1.9 DDiS / Petrol, Swift, SX4, Vitara (CAN + K-Line 0x5A)',modelsTr:'Grand Vitara 1.9 DDiS / Benzinli, Swift, SX4, Vitara (CAN + K-Line 0x5A)',options:[{val:1,en:'ON (Factory Alarm Armed)',tr:'AÇIK (Fabrika Alarmı Aktif)'},{val:0,en:'OFF (Alarm Disarmed)',tr:'KAPALI (Fabrika Alarmı Devre Dışı)'}]},
-  {id:'HF-UNLOCKMODE',code:'BCM 30 3B / 3B 63',profiles:['gv_jb419d','suzuki_can','gv_petrol','suzuki_kline'],titleEn:'Remote / Keyless Door Unlock Behavior (1-Press vs 2-Press)',titleTr:'Kumandadan Kilit Açma Modu (Tek Basış Tüm Kapılar / İki Aşamalı)',modelsEn:'Vitara, S-Cross, Swift, Baleno, Grand Vitara CAN',modelsTr:'Vitara, S-Cross, Swift, Baleno, Grand Vitara CAN',options:[{val:0,en:'1-Press: Unlock All Doors Immediately',tr:'Tek Basışta Tüm Kapıları Aç'},{val:1,en:'2-Press: Driver Door First, Then All',tr:'2 Aşamalı (Önce Sürücü, 2. Basışta Tümü)'}]},
-  {id:'HF-FOLLOWHOME',code:'BCM 30 3B 08 02 / 3B 39',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Guide Me Home / Follow Me Home Headlight Timer',titleTr:'Eve Kadar Takip (Follow Me Home) Far Gecikme Süresi',modelsEn:'All Suzuki CAN & K-Line BCM Models',modelsTr:'Tüm Suzuki CAN ve K-Line BCM Modelleri',options:[{val:0,en:'OFF (0 sec)',tr:'KAPALI (0 sn)'},{val:1,en:'10 Seconds',tr:'10 Saniye'},{val:2,en:'15 Seconds',tr:'15 Saniye'},{val:3,en:'20 Seconds',tr:'20 Saniye'},{val:4,en:'25 Seconds',tr:'25 Saniye'},{val:5,en:'30 Seconds',tr:'30 Saniye'}]},
   {id:'HF-GUIDECAR',code:'BCM 30 3B 08 04',profiles:['suzuki_can'],titleEn:'Guide Me To Car (Welcome Exterior Lights on Unlock)',titleTr:'Araca Karşılama Aydınlatması (Kilit Açınca Farların Yanma Süresi)',modelsEn:'Vitara, S-Cross, Swift, Baleno, Ignis (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno, Ignis (CAN BCM)',options:[{val:0,en:'OFF (0 sec)',tr:'KAPALI (0 sn)'},{val:1,en:'10 Seconds',tr:'10 Saniye'},{val:2,en:'15 Seconds',tr:'15 Saniye'},{val:3,en:'20 Seconds',tr:'20 Saniye'},{val:4,en:'25 Seconds',tr:'25 Saniye'}]},
   {id:'HF-FOOTLIGHT',code:'BCM 30 3B 08 80',profiles:['suzuki_can'],titleEn:'Footwell Ambient Lighting Mode',titleTr:'Ayak Altı (Footwell) Ambiyans Aydınlatma Çalışma Modu',modelsEn:'Vitara, S-Cross, Swift, Baleno (CAN BCM)',modelsTr:'Vitara, S-Cross, Swift, Baleno (CAN BCM)',options:[{val:0,en:'Linked to Headlights + Doors (Ambient + Courtesy)',tr:'Farlar + Kapılar ile Birlikte (Ambiyans + Kapı)'},{val:1,en:'Linked to Door Open Only',tr:'Sadece Kapı Açılınca Yanar'},{val:2,en:'OFF (Disabled)',tr:'KAPALI (Devre Dışı)'}]},
   {id:'HF-HBA',code:'BCM 30 36 08 40',profiles:['suzuki_can'],titleEn:'High Beam Assist (Auto High Beam) Activation',titleTr:'Otomatik Uzun Far Asistanı (High Beam Assist) Aktivasyonu',modelsEn:'Vitara, S-Cross, Swift A2L, Jimny JB74 (Camera Equipped)',modelsTr:'Vitara, S-Cross, Swift A2L, Jimny JB74 (Kameralı Modeller)',options:[{val:1,en:'ON (High Beam Assist Enabled)',tr:'AÇIK (Uzun Far Asistanı Aktif)'},{val:0,en:'OFF (Manual High Beam Only)',tr:'KAPALI (Sadece Manuel Uzun Far)'}]},
-  {id:'HF-ANSWERLIGHT',code:'BCM 30 35 / 30 10',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'Lock / Unlock Visual Answerback (Hazard vs Dome Light)',titleTr:'Kilitleme / Açma Görsel Onay (Dörtlü Sinyal vs Tavan Lambası)',modelsEn:'Grand Vitara JB (CAN/K-Line 0x5A), Swift, SX4, Vitara',modelsTr:'Grand Vitara JB (CAN/K-Line 0x5A), Swift, SX4, Vitara',options:[{val:0,en:'Hazard Warning Turn Signals Flash',tr:'Dörtlü Sinyaller Yanıp Söner (Standart)'},{val:1,en:'Interior Dome Lamp Only (Stealth Lock)',tr:'Sadece İç Tavan Lambası (Dış Sinyal Çakmaz)'}]},
-  {id:'HF-AUTOLIGHT-HW',code:'BCM 3B 3A / 33 / 34',profiles:['gv_jb419d','gv_petrol','suzuki_kline'],titleEn:'Auto Headlight Sensor & Keyless Hardware Retrofit Coding',titleTr:'Otomatik Far Sensörü & Keyless Donanım (Retrofit) Kodlaması',modelsEn:'Grand Vitara JB (1.9 DDiS / Petrol), Swift RS, SX4 (BCM 103..118)',modelsTr:'Grand Vitara JB (1.9 DDiS / Benzinli), Swift RS, SX4 (BCM 103..118)',options:[{val:1,en:'Enable Auto Light Sensor (3B 3A 06)',tr:'Otomatik Far Sensörünü Aktif Et (3B 3A 06)'},{val:0,en:'Disable Auto Light Sensor (3B 3A 04)',tr:'Otomatik Far Sensörünü Kapat (3B 3A 04)'},{val:2,en:'Enable Keyless Push-Start (3B 33 00)',tr:'Keyless Anahtarsız Çalıştırma Aktif (3B 33 00)'},{val:3,en:'Enable I-Key System (3B 34 01)',tr:'I-Key Akıllı Anahtar Aktif (3B 34 01)'}]},
-  {id:'HF-ROOMLAMP',code:'BCM 3B 16 / 3B 17',profiles:['gv_jb419d','gv_petrol','suzuki_kline'],titleEn:'Interior Dome Lamp Fade-Out & IG-OFF Delay Timer',titleTr:'İç Tavan Lambası Sönme Gecikmesi (Dimmer Timer)',modelsEn:'Grand Vitara JB (1.9 DDiS / Petrol), Swift, SX4, Jimny (K-Line/CAN)',modelsTr:'Grand Vitara JB (1.9 DDiS / Benzinli), Swift, SX4, Jimny (K-Line/CAN)',options:[{val:2,en:'2.0 Seconds Fade',tr:'2.0 Saniye Gecikmeli Sönme'},{val:3,en:'3.0 Seconds Fade',tr:'3.0 Saniye Gecikmeli Sönme'},{val:1,en:'1.0 Second Fade',tr:'1.0 Saniye Gecikmeli Sönme'},{val:0,en:'0.5 Second Fast Fade',tr:'0.5 Saniye Hızlı Sönme'},{val:4,en:'Immediate OFF (0 sec)',tr:'Anında Sönme (0 sn)'}]},
-  {id:'HF-RETAINEDPWR',code:'BCM 3B 27',profiles:['gv_jb419d','gv_petrol','suzuki_kline'],titleEn:'Retained Power Window Operation After Ignition OFF',titleTr:'Kontak Kapandıktan Sonra Cam Kaldırma Yetkisi Süresi',modelsEn:'Grand Vitara JB (1.9 DDiS / Petrol), Swift, SX4, Jimny',modelsTr:'Grand Vitara JB (1.9 DDiS / Benzinli), Swift, SX4, Jimny',options:[{val:2,en:'Extended Timer (Mode 2)',tr:'Uzatılmış Süre (Mod 2)'},{val:1,en:'Standard Timer (Mode 1)',tr:'Standart Süre (Mod 1)'},{val:0,en:'OFF (Immediate Cut on IG-OFF)',tr:'KAPALI (Kontak Kapanınca Kes)'}]},
   {id:'HF-UDS-IKEY',code:'UDS 2E 14 01..14',profiles:['suzuki_can'],titleEn:'UDS Smart Key & Door Handle Request Switch Customization',titleTr:'UDS Akıllı Anahtar & Kapı Kolu Tuşu Kişiselleştirme (BCM 168..190)',modelsEn:'New Swift, Vitara Hybrid, S-Cross Hybrid, Baleno (UDS BCM)',modelsTr:'Yeni Swift, Vitara Hybrid, S-Cross Hybrid, Baleno (UDS BCM)',options:[{val:0,en:'Enable Door Handle Touch Unlock (2E 14 01 00)',tr:'Kapı Kolu Dokunmatik Kilit Açma AÇIK'},{val:1,en:'Disable Door Handle Touch Unlock (2E 14 01 01)',tr:'Kapı Kolu Dokunmatik Kilit Açma KAPALI'},{val:2,en:'Hazard Answerback ON (2E 14 07 00)',tr:'Dörtlü Sinyal Onayı AÇIK (2E 14 07 00)'},{val:3,en:'Hazard Answerback OFF (2E 14 07 01)',tr:'Dörtlü Sinyal Onayı KAPALI (2E 14 07 01)'},{val:4,en:'Key Reminder Buzzer ON (2E 14 14 00)',tr:'Anahtar Unutma İkazı AÇIK (2E 14 14 00)'},{val:5,en:'Key Reminder Buzzer OFF (2E 14 14 01)',tr:'Anahtar Unutma İkazı KAPALI (2E 14 14 01)'}]},
   {id:'HF-SEATBELT',code:'BCM/IPC 2E 20 41',profiles:['suzuki_can'],titleEn:'Seatbelt Reminder Warning Chime (Acoustic Buzzer)',titleTr:'Emniyet Kemeri Sesli İkaz (Buzzer) Sesi Açma / Kapatma',modelsEn:'Suzuki UDS BCM / IPC Models (CUS-01 2E 20 41)',modelsTr:'Suzuki UDS BCM / Gösterge Modelleri (CUS-01 2E 20 41)',options:[{val:0,en:'OFF (Disable Seatbelt Chime - 00 60)',tr:'KAPALI (Kemer Sesli İkazını Sustur - 00 60)'},{val:1,en:'ON (Factory Seatbelt Chime - 00 00)',tr:'AÇIK (Fabrika Kemer Sesli İkazı - 00 00)'}]},
-  {id:'HF-CLUSTER-THEME',code:'IPC 30 05 07 / 31 01 C0',profiles:['suzuki_can'],titleEn:'Cluster / Center Display Icon Theme & Language Reset',titleTr:'Gösterge / Bilgi Ekranı İkon Renk Teması Değişimi',modelsEn:'Swift, Vitara, S-Cross, Baleno (ADM-04 / IPC)',modelsTr:'Swift, Vitara, S-Cross, Baleno (ADM-04 / Gösterge)',options:[{val:1,en:'Switch Icon Color Theme (30 05 07 40)',tr:'İkon Renk Temasını Değiştir (30 05 07 40)'},{val:0,en:'Reset Display Theme / Language (31 01 C0 11)',tr:'Ekran Temasını Fabrika Ayarına Döndür'}]},
-  {id:'HF-ESP-DYNO',code:'ABS 30 80 07 04',profiles:['gv_jb419d','gv_petrol','suzuki_can','suzuki_kline'],titleEn:'ESP Off-Road / Dyno Roller Test Mode (Temporary ESP Full Off)',titleTr:'ESP Off-Road / Dyno Test Modu (ESP Tam Devre Dışı Bırakma)',modelsEn:'Grand Vitara JB (ESP), Swift Sport, SX4, Vitara (ABS-04)',modelsTr:'Grand Vitara JB (ESP), Swift Sport, SX4, Vitara (ABS-04)',options:[{val:1,en:'Activate ESP Dyno / Off-Road Mode (30 80 07 04 04)',tr:'ESP Tam Devre Dışı Modunu Aç (30 80 07 04 04)'},{val:0,en:'Restore Normal ESP Operation (30 80 07 04 00)',tr:'Normal ESP Moduna Geri Dön (30 80 07 04 00)'}]}
+  {id:'HF-CLUSTER-THEME',code:'IPC 30 05 07 / 31 01 C0',profiles:['suzuki_can'],titleEn:'Cluster / Center Display Icon Theme & Language Reset',titleTr:'Gösterge / Bilgi Ekranı İkon Renk Teması Değişimi',modelsEn:'Swift, Vitara, S-Cross, Baleno (ADM-04 / IPC)',modelsTr:'Swift, Vitara, S-Cross, Baleno (ADM-04 / Gösterge)',options:[{val:1,en:'Switch Icon Color Theme (30 05 07 40)',tr:'İkon Renk Temasını Değiştir (30 05 07 40)'},{val:0,en:'Reset Display Theme / Language (31 01 C0 11)',tr:'Ekran Temasını Fabrika Ayarına Döndür'}]}
 ];
 
 let bcmDecodedState={};
@@ -848,20 +849,39 @@ function renderCodingForVehicle(){
   const box=$('codingRows');
   if(!box) return;
   const prof=state.activeProfile||'auto';
-  const filterOn=Boolean($('filterCodingByVehicle')?.checked) && prof!=='auto';
+  const filterOn=Boolean($('filterCodingByVehicle')?.checked);
   box.replaceChildren();
+  let supportedCount=0;
   let shown=0;
+
   for(const item of hiddenFeaturesCatalog){
-    const match=!filterOn || item.profiles.includes(prof);
-    if(!match) continue;
+    const isSupported = (prof==='auto') ? true : item.profiles.includes(prof);
+    if(isSupported) supportedCount++;
+    if(filterOn && !isSupported) continue;
     shown++;
+
     const tr=document.createElement('tr');
+    if(!isSupported){
+      tr.style.opacity='0.45';
+      tr.style.background='#f1f5f9';
+    }
+
     addCell(tr,item.id+'\n'+item.code,'mono');
+
     const titleTd=document.createElement('td');
     const strong=document.createElement('strong');
     strong.textContent=lang==='tr'?item.titleTr:item.titleEn;
     titleTd.append(strong);
-    if(bcmDecodedState && Object.prototype.hasOwnProperty.call(bcmDecodedState,item.id)){
+
+    if(!isSupported){
+      const badge=document.createElement('div');
+      badge.className='tag-fault mono';
+      badge.style.fontSize='10px';
+      badge.style.fontWeight='700';
+      badge.style.marginTop='3px';
+      badge.textContent=lang==='tr'?'❌ BU MODELDE DONANIM / BCM DESTEĞİ YOK (KAPALI)':'❌ NOT AVAILABLE ON THIS MODEL (DISABLED)';
+      titleTd.append(badge);
+    } else if(bcmDecodedState && Object.prototype.hasOwnProperty.call(bcmDecodedState,item.id)){
       const curVal=bcmDecodedState[item.id];
       const curOpt=item.options.find(o=>o.val===curVal);
       const badge=document.createElement('div');
@@ -870,12 +890,23 @@ function renderCodingForVehicle(){
       badge.style.marginTop='3px';
       badge.textContent=(lang==='tr'?'Mevcut Araç Ayarı: ':'Current Vehicle Setting: ')+(curOpt?(lang==='tr'?curOpt.tr:curOpt.en):String(curVal));
       titleTd.append(badge);
+    } else {
+      const badge=document.createElement('div');
+      badge.className='mono';
+      badge.style.fontSize='10.5px';
+      badge.style.color='#0284c7';
+      badge.style.marginTop='2px';
+      badge.textContent=lang==='tr'?'✓ Bu model ile uyumlu (Kişiselleştirilebilir)':'✓ Supported on this model (Customizable)';
+      titleTd.append(badge);
     }
     tr.append(titleTd);
+
     addCell(tr,lang==='tr'?item.modelsTr:item.modelsEn,'mono');
+
     const selTd=document.createElement('td');
     const sel=document.createElement('select');
     sel.style.width='100%';
+    sel.disabled=!isSupported;
     for(const o of item.options){
       sel.add(new Option(lang==='tr'?o.tr:o.en,String(o.val)));
     }
@@ -884,32 +915,44 @@ function renderCodingForVehicle(){
     }
     selTd.append(sel);
     tr.append(selTd);
+
     const actTd=document.createElement('td');
     const btn=document.createElement('button');
-    btn.className='primary';
     btn.style.width='100%';
-    btn.textContent=lang==='tr'?'Kodla / Yaz':'Apply / Code';
-    btn.onclick=()=>operation(async()=>{
-      const optText=sel.options[sel.selectedIndex]?.text||sel.value;
-      const featTitle=lang==='tr'?item.titleTr:item.titleEn;
-      if(!confirm((lang==='tr'?'Bu gizli özellik / BCM kodlaması araca yazılacak. Kontak AÇIK mı?\n\nÖzellik: ':'Write this hidden feature / BCM coding to the vehicle? Ensure Ignition is ON.\n\nFeature: ')+featTitle+'\n -> '+optText)) return;
-      stopPolling();
-      $('codingLog').textContent=t('working');
-      const r=await api('/api/coding/write','POST',{featureId:item.id,option:sel.value},45000);
-      $('codingLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
-      if(r.success){
-        bcmDecodedState[item.id]=parseInt(sel.value,10);
-        renderCodingForVehicle();
-      }else{
-        throw Error(r.message||'Coding failed');
-      }
-    });
+    if(isSupported){
+      btn.className='primary';
+      btn.textContent=lang==='tr'?'Kodla / Yaz':'Apply / Code';
+      btn.onclick=()=>operation(async()=>{
+        const optText=sel.options[sel.selectedIndex]?.text||sel.value;
+        const featTitle=lang==='tr'?item.titleTr:item.titleEn;
+        if(!confirm((lang==='tr'?'Bu gizli özellik / BCM kodlaması araca yazılacak. Kontak AÇIK mı?\n\nÖzellik: ':'Write this hidden feature / BCM coding to the vehicle? Ensure Ignition is ON.\n\nFeature: ')+featTitle+'\n -> '+optText)) return;
+        stopPolling();
+        $('codingLog').textContent=t('working');
+        const r=await api('/api/coding/write','POST',{featureId:item.id,option:sel.value},45000);
+        $('codingLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
+        if(r.success){
+          bcmDecodedState[item.id]=parseInt(sel.value,10);
+          renderCodingForVehicle();
+        }else{
+          throw Error(r.message||'Coding failed');
+        }
+      });
+    } else {
+      btn.disabled=true;
+      btn.style.opacity='0.45';
+      btn.style.cursor='not-allowed';
+      btn.textContent=lang==='tr'?'❌ Bu Modelde Yok':'❌ Not on this Model';
+    }
     actTd.append(btn);
     tr.append(actTd);
     box.append(tr);
   }
+
   if($('codingFilterBadge')){
-    $('codingFilterBadge').textContent=(lang==='tr'?'Modele Göre Filtrele':'Filter by Model')+' ('+shown+'/'+hiddenFeaturesCatalog.length+')';
+    $('codingFilterBadge').textContent=(lang==='tr'?'Sadece Uyumlu Özellikleri Göster':'Show Only Supported Features')+' ('+supportedCount+'/'+hiddenFeaturesCatalog.length+')';
+  }
+  if($('codingModelSummary')){
+    $('codingModelSummary').textContent=(lang==='tr'?'Model Kapsamı: ':'Model Scope: ')+profileTitle(prof)+' ('+supportedCount+' '+(lang==='tr'?'Uyumlu':'Supported')+' / '+(hiddenFeaturesCatalog.length-supportedCount)+' '+(lang==='tr'?'Kapalı':'Disabled')+')';
   }
 }
 
@@ -1678,6 +1721,7 @@ function applyLanguage(){
   renderScan();
   renderMetrics();
   renderKline();
+  renderCodingForVehicle();
   updateCsvButtons();
   updateControls();
 }

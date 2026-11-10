@@ -102,6 +102,18 @@ Aracın BCM beyninden okunan gerçek `rawHex` ve SDT-II veritabanı (`BCM-06`, `
 
 ---
 
+### G. Gizli Özelliklerin Modele Göre Dinamik Filtrelenmesi ve Uyumsuz Özelliklerin Kilitlenmesi
+- **Gereksinim:** Araç modelleri arasında donanım farkları bulunmaktadır (örneğin Grand Vitara JB'de mekanik flasör rölesi ve manuel aynalar bulunurken, modern CAN Vitara LY'de mikrodenetleyici kontrollü konfor sinyali ve elektrikli katlanır ayna BCM çıkışları vardır). Bir araçta donanımsal veya yazılımsal olarak bulunmayan gizli özelliklerin açık gösterilmemesi ve araca yanlış komut yazılmasının önlenmesi istendi.
+- **Uygulanan Model Uyumluluk Matrisi:**
+  - **Grand Vitara (1.9 DDiS / Benzinli - JB Serisi):** 11 adet fabrika fonksiyonu (`HF-ALARM`, `HF-ANSWERLIGHT`, `HF-AUTOLOCK`, `HF-AUTOUNLOCK`, `HF-UNLOCKMODE`, `HF-ROOMLAMP`, `HF-RETAINEDPWR`, `HF-AUTOLIGHT-HW`, `HF-BUZZER`, `HF-FOLLOWHOME`, `HF-ESP-DYNO`) tam destekli ve aktif.
+  - **Uyumsuz / Olmayan 10 Özellik (Grand Vitara'da Kapalı):** `HF-DRL`, `HF-LANEFLASH`, `HF-MIRROR`, `HF-CORNER`, `HF-GUIDECAR`, `HF-FOOTLIGHT`, `HF-HBA`, `HF-UDS-IKEY`, `HF-SEATBELT`, `HF-CLUSTER-THEME`.
+- **Çift Katmanlı Koruma & Kullanıcı Deneyimi:**
+  1. **Arayüz (Frontend):** Uyumsuz satırlar soluklaştırılır (`opacity: 0.45`), başlığın altında kırmızı `❌ BU MODELDE DONANIM / BCM DESTEĞİ YOK (KAPALI)` ikazı çıkar. Seçenek açılır kutusu (`<select>`) ve buton (`<button>`) devre dışı bırakılır (`disabled`), butonda `❌ Bu Modelde Yok` yazar.
+  2. **Model Filtreleme Onay Kutusu:** Tablonun üstündeki filtre işaretlendiğinde sadece o araca uyan özellikler gösterilir (Grand Vitara için 11 özellik).
+  3. **C++ Sunucu Güvenlik Kilidi (`ExecuteHiddenFeatureCoding`):** Backend seviyesinde de aktif araç profili kontrol edilir. Uyumsuz bir kodlama talebi geldiğinde sunucu donanım güvenliği gereği işlemi reddederek `FEATURE_NOT_SUPPORTED` hatası döndürür.
+
+---
+
 ## 2. Güncel Dosya ve Derleme Durumu
 
 - **C++ Sunucu:** `suzuki_diag_server.cpp` (MSVC x86 derlemesi, 0 hata, 0 uyarı).
