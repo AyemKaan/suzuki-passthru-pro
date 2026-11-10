@@ -167,6 +167,24 @@ Kullanıcının seçtiği araç profiline (`Vehicle Profile`) veya `Auto Detect`
 
 ---
 
+### L. İmmobilizer & Transponder Kodlamasının Modele Göre Dinamik Mimarisi (`SuzukiImmoSystem`)
+- **Mühendislik Gereksinimi:** Suzuki modelleri arasında İmmobilizer ve Anahtar Programlama donanım mimarisi ve güvenlik protokolleri köklü farklılıklar gösterir:
+  1. **Grand Vitara 1.9 DDiS (`gv_jb419d`):** Kontak transponder anteni motor beynine değil, direksiyon altındaki **Keyless Start & İmmobilizer Modülü (33970-67J0)**'ne bağlıdır. İletişim **K-Line Pin 7 Hedef `0x5D` (Base 70)** ve **CAN ID `0x275` (Base 46)** üzerindedir. Bosch EDC16C39 motor beyninde transponder saklanmaz. Güvenlik 4-Haneli PIN (`0895`) iledir. UDS Seed-Key bu modelde yoktur.
+  2. **Grand Vitara Benzinli (`gv_petrol`):** Denso/Hitachi Motor Beyni (**CAN `0x7E0` / Base 41**) ile KLS Beyni (**CAN `0x275` / K-Line `0x5D`**) entegre çalışır. 4-Haneli PIN (`0895` / `9502`) kullanılır. UDS Seed-Key bu modelde yoktur.
+  3. **Klasik Suzuki K-Line (`suzuki_kline`):** 2000–2008 Jimny SN413, Swift MZ KWP, Ignis, Alto, Wagon R modellerinde saf Pin 7 K-Line hattı kullanılır. İmmobilizer **Harici IMM Beyni (`0x5B` / Base 36)** veya **ECM KWP (`0x11` / Base 64)** üzerindedir. CAN hattı bulunmaz. 4-Haneli PIN (`0895` / `5634`) kullanılır.
+  4. **Modern Suzuki CAN UDS (`suzuki_can`):** 2015+ Vitara LY, SX4 S-Cross JY, Swift AZ, Jimny JB74 modellerinde modern Gövde & Keyless Beyni (**CAN UDS `0x7E4` / `0x750` / Base 169**) bulunur. Bu araçlarda klasik 4-haneli K-Line PIN kodu kabul edilmez; **Servis 27 (27 03 Request Seed -> 27 04 Send Key)** ve **31 01 01 0D Anahtar Kayıt Rutini** kullanılır.
+- **Arayüz (Sekme 3) Dinamik Adaptasyonu:**
+  - İmmobilizer panelinin en üstüne şık bir **Model Mimari Bilgi Rozeti** (`#immoModelArchCard`) eklendi.
+  - Seçilen araç profiline göre panel anında şekil alır:
+    - Grand Vitara ve Klasik K-Line seçildiğinde: Bölüm 2 (4-Haneli PIN) tam aktif olur; Bölüm 3 (UDS Seed-Key) soluklaştırılarak butonları kilitlenir (`❌ BU MODELDE UDS YOK`).
+    - Modern CAN UDS seçildiğinde: Bölüm 3 (UDS Seed-Key) yeşil rozetle tam aktif olur; Bölüm 2 (4-Haneli PIN) kilitlenir (`❌ BU MODELDE PIN YOK (UDS GEREKLİ)`).
+- **C++ Backend Çift Katmanlı Güvenlik Kilidi:**
+  - `ExecuteImmobilizerAction()` fonksiyonu `SuzukiImmoSystem` enum tipi ile güçlendirildi.
+  - Transponder ID (`21 B0`) ve Anahtar Sayısı (`21 A1`) sorguları araca göre doğrudan doğru adrese (`gv_jb419d` için `0x5D`, petrol için `0x7E0`, klasik için `0x5B`, UDS için `0x7E4`) yönlendirilir.
+  - UDS olmayan araca UDS komutu veya UDS araca eski K-Line PIN komutu gönderilmesi sunucu tarafında donanım güvenliği gereği reddedilir.
+
+---
+
 ## 2. Araç Üzerinde Yapılan Canlı Testlerin Kapsamlı Durum Matrisi
 
 Suzuki Grand Vitara 1.9 DDiS (JB419D) aracı üzerinde bugüne kadar yapılan canlı OBD/J2534 bağlantı testleri, donanım engelleri ve bir sonraki bağlantıda sırada bekleyen işlemler aşağıda kategorize edilmiştir:

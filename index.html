@@ -542,6 +542,13 @@ tr:hover td{background:#e0f2fe}
         <div class="pane pane-tall">
           <div class="pane-head"><span data-i="immoPanelTitle">Immobilizer, Transponder & Keyless Key Programming (IMMO-01..207)</span></div>
           <div style="padding:7px 8px;background:#f8fafc;border-bottom:1px solid #94a3b8;display:flex;flex-direction:column;gap:6px;font-size:11.5px">
+            <div id="immoModelArchCard" style="padding:6px 9px;background:#e2e8f0;border-left:4px solid #0284c7;border-radius:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;font-size:11px">
+              <div>
+                <strong style="color:#0f172a" id="immoArchTitle">📌 İmmobilizer Mimarisi:</strong>
+                <span id="immoArchDesc" style="color:#334155;margin-left:4px">KLS Modülü (33970-67J0) K-Line Pin 7 Hedef 0x5D / 4-Digit PIN (0895)</span>
+              </div>
+              <span id="immoArchBadge" class="tag" style="background:#0284c7;color:#fff;font-weight:700;padding:2px 8px;border-radius:10px">K-Line 0x5D (KLS)</span>
+            </div>
             <div>
               <strong style="display:block;margin-bottom:3px;color:#0f172a" data-i="immoSafeTitle">1. Safe Read-Only Immobilizer Diagnostics (No PIN Required):</strong>
               <div class="immo-grid">
@@ -551,8 +558,11 @@ tr:hover td{background:#e0f2fe}
                 <button data-immo="antenna_test" data-i="immoAntTest">Keyless Interior Antenna Test (2F 01 06)</button>
               </div>
             </div>
-            <div style="border-top:1px solid #cbd5e1;padding-top:5px">
-              <strong style="display:block;margin-bottom:3px;color:#0f172a" data-i="immoPinTitle">2. 4-Digit PIN Key & Remote Coding (Grand Vitara JB, Swift, SX4, Jimny — CAN & K-Line):</strong>
+            <div id="immoSecPin" style="border-top:1px solid #cbd5e1;padding-top:5px;transition:opacity 0.2s">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+                <strong style="color:#0f172a" data-i="immoPinTitle">2. 4-Digit PIN Key & Remote Coding (Grand Vitara JB, Swift, SX4, Jimny — CAN & K-Line):</strong>
+                <span id="immoPinStatusTag" class="tag tag-online" style="font-size:10px;padding:1px 6px">● BU MODELDE AKTİF</span>
+              </div>
               <div style="display:flex;gap:5px;align-items:center;margin-bottom:4px;flex-wrap:wrap">
                 <label class="mono" style="font-weight:700">PIN:</label>
                 <input id="immoPinInput" value="0895" maxlength="4" class="mono" style="width:68px;font-weight:700;text-align:center" placeholder="0895">
@@ -576,8 +586,11 @@ tr:hover td{background:#e0f2fe}
                 <button data-immo="delete_all_keys" class="danger" data-i="immoDeleteKeys">Erase All Keys (30 A1 08 / A5 A1 08)</button>
               </div>
             </div>
-            <div style="border-top:1px solid #cbd5e1;padding-top:5px">
-              <strong style="display:block;margin-bottom:3px;color:#0f172a" data-i="immoUdsTitle">3. 2015+ UDS Seed-Key Immobilizer (Vitara LY, S-Cross, Swift A2L — IMMO-110..113):</strong>
+            <div id="immoSecUds" style="border-top:1px solid #cbd5e1;padding-top:5px;transition:opacity 0.2s">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+                <strong style="color:#0f172a" data-i="immoUdsTitle">3. 2015+ UDS Seed-Key Immobilizer (Vitara LY, S-Cross, Swift A2L — IMMO-110..113):</strong>
+                <span id="immoUdsStatusTag" class="tag tag-fault" style="font-size:10px;padding:1px 6px">❌ BU MODELDE UDS YOK (KAPALI)</span>
+              </div>
               <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
                 <button data-immo="uds_request_seed" data-i="immoUdsSeed">1. Request Seed (27 03)</button>
                 <input id="immoSeedKeyInput" class="mono" style="flex:1;min-width:120px" placeholder="Calculated Key Hex (e.g. 11 22 33 44)">
@@ -994,6 +1007,88 @@ function renderCodingForVehicle(){
   }
 }
 
+function updateImmobilizerModelView(profId){
+  const p = profId || state.activeProfile || 'auto';
+  const card = $('immoModelArchCard');
+  const title = $('immoArchTitle');
+  const desc = $('immoArchDesc');
+  const badge = $('immoArchBadge');
+  const secPin = $('immoSecPin');
+  const secUds = $('immoSecUds');
+  const pinTag = $('immoPinStatusTag');
+  const udsTag = $('immoUdsStatusTag');
+  const pinInput = $('immoPinInput');
+  const pinPreset = $('immoPinPreset');
+
+  if (!card) return;
+
+  if (p === 'gv_jb419d') {
+    if (title) title.textContent = lang === 'tr' ? '📌 İmmobilizer Mimarisi: Grand Vitara 1.9 DDiS (JB419D)' : '📌 Architecture: Grand Vitara 1.9 DDiS (JB419D)';
+    if (desc) desc.textContent = lang === 'tr' 
+      ? 'Transponder kontak bobini direksiyon altındaki Keyless & İmmobilizer Kontrol Ünitesine (K-Line Pin 7, Hedef 0x5D / 33970-67J0) bağlıdır. Bosch EDC16C39 motor beyni transponder tutmaz. 4 Haneli PIN (0895) kullanılır.'
+      : 'Transponder coil wired to Keyless & Immobilizer Unit (K-Line Pin 7, Target 0x5D / 33970-67J0). Bosch EDC16C39 ECM does not store transponders. 4-Digit PIN (0895) used.';
+    if (badge) { badge.textContent = 'K-Line 0x5D (KLS) · 4-Digit PIN'; badge.style.background = '#0284c7'; }
+    if (pinInput && (!pinInput.value || pinInput.value === '0000')) pinInput.value = '0895';
+    if (pinPreset) pinPreset.value = '0895';
+
+    if (secPin) { secPin.style.opacity = '1'; secPin.querySelectorAll('button,input,select').forEach(el => el.disabled = false); }
+    if (pinTag) { pinTag.textContent = lang === 'tr' ? '● BU MODELDE AKTİF' : '● ACTIVE ON THIS MODEL'; pinTag.className = 'tag tag-online'; }
+
+    if (secUds) { secUds.style.opacity = '0.45'; secUds.querySelectorAll('button,input').forEach(el => el.disabled = true); }
+    if (udsTag) { udsTag.textContent = lang === 'tr' ? '❌ BU MODELDE UDS YOK (KAPALI)' : '❌ NO UDS ON THIS MODEL'; udsTag.className = 'tag tag-fault'; }
+  } else if (p === 'gv_petrol') {
+    if (title) title.textContent = lang === 'tr' ? '📌 İmmobilizer Mimarisi: Grand Vitara Benzinli (JB Serisi)' : '📌 Architecture: Grand Vitara Petrol (JB Series)';
+    if (desc) desc.textContent = lang === 'tr'
+      ? 'Denso/Hitachi Motor Beyni (CAN 0x7E0 / Base 41) ve KLS Beyni (CAN 0x275 / K-Line 0x5D). 4 Haneli PIN (0895 / 9502) kullanılır.'
+      : 'Denso/Hitachi Petrol ECM (CAN 0x7E0) + KLS Unit (CAN 0x275 / K-Line 0x5D). 4-Digit PIN used.';
+    if (badge) { badge.textContent = 'CAN 0x7E0 + KLS · 4-Digit PIN'; badge.style.background = '#0284c7'; }
+    if (pinInput && (!pinInput.value || pinInput.value === '0000')) pinInput.value = '0895';
+
+    if (secPin) { secPin.style.opacity = '1'; secPin.querySelectorAll('button,input,select').forEach(el => el.disabled = false); }
+    if (pinTag) { pinTag.textContent = lang === 'tr' ? '● BU MODELDE AKTİF' : '● ACTIVE ON THIS MODEL'; pinTag.className = 'tag tag-online'; }
+
+    if (secUds) { secUds.style.opacity = '0.45'; secUds.querySelectorAll('button,input').forEach(el => el.disabled = true); }
+    if (udsTag) { udsTag.textContent = lang === 'tr' ? '❌ BU MODELDE UDS YOK (KAPALI)' : '❌ NO UDS ON THIS MODEL'; udsTag.className = 'tag tag-fault'; }
+  } else if (p === 'suzuki_kline') {
+    if (title) title.textContent = lang === 'tr' ? '📌 İmmobilizer Mimarisi: Klasik Suzuki K-Line (Jimny SN / Swift / Alto / Ignis)' : '📌 Architecture: Classic Suzuki K-Line';
+    if (desc) desc.textContent = lang === 'tr'
+      ? 'Saf Pin 7 K-Line; Harici İmmobilizer Beyni (Hedef 0x5B / Base 36) veya ECM KWP (0x11). 4 Haneli PIN (0895 / 5634) kullanılır. CAN hattı bulunmaz.'
+      : 'Pure Pin 7 K-Line; Dedicated IMM (0x5B) or ECM KWP (0x11). 4-Digit PIN used. No CAN bus.';
+    if (badge) { badge.textContent = 'K-Line 0x5B / 0x11 · 4-Digit PIN'; badge.style.background = '#0d9488'; }
+
+    if (secPin) { secPin.style.opacity = '1'; secPin.querySelectorAll('button,input,select').forEach(el => el.disabled = false); }
+    if (pinTag) { pinTag.textContent = lang === 'tr' ? '● BU MODELDE AKTİF' : '● ACTIVE ON THIS MODEL'; pinTag.className = 'tag tag-online'; }
+
+    if (secUds) { secUds.style.opacity = '0.45'; secUds.querySelectorAll('button,input').forEach(el => el.disabled = true); }
+    if (udsTag) { udsTag.textContent = lang === 'tr' ? '❌ BU MODELDE UDS YOK (KAPALI)' : '❌ NO UDS ON THIS MODEL'; udsTag.className = 'tag tag-fault'; }
+  } else if (p === 'suzuki_can') {
+    if (title) title.textContent = lang === 'tr' ? '📌 İmmobilizer Mimarisi: Modern Suzuki UDS CAN (Vitara LY / S-Cross / Swift AZ)' : '📌 Architecture: Modern Suzuki UDS CAN';
+    if (desc) desc.textContent = lang === 'tr'
+      ? 'Modern Gövde & Keyless Ünitesi (CAN UDS 0x7E4 / 0x750 - ISO 14229). 4 haneli K-Line PIN kullanılmaz; Servis 27 Seed-Key güvenlik erişimi kullanılır.'
+      : 'Modern BCM & Keyless (CAN UDS 0x7E4 / 0x750). Classic 4-digit PIN not supported; Service 27 Seed-Key required.';
+    if (badge) { badge.textContent = 'CAN UDS 0x7E4 · Seed-Key (27 03)'; badge.style.background = '#8b5cf6'; }
+
+    if (secPin) { secPin.style.opacity = '0.45'; secPin.querySelectorAll('button,input,select').forEach(el => el.disabled = true); }
+    if (pinTag) { pinTag.textContent = lang === 'tr' ? '❌ BU MODELDE PIN YOK (UDS GEREKLİ)' : '❌ NO PIN ON UDS'; pinTag.className = 'tag tag-fault'; }
+
+    if (secUds) { secUds.style.opacity = '1'; secUds.querySelectorAll('button,input').forEach(el => el.disabled = false); }
+    if (udsTag) { udsTag.textContent = lang === 'tr' ? '● BU MODELDE AKTİF (UDS)' : '● ACTIVE ON THIS MODEL'; udsTag.className = 'tag tag-online'; }
+  } else {
+    // Auto Detect
+    if (title) title.textContent = lang === 'tr' ? '📌 İmmobilizer Mimarisi: Otomatik Algılama (CAN + K-Line)' : '📌 Architecture: Auto-Detection (CAN + K-Line)';
+    if (desc) desc.textContent = lang === 'tr'
+      ? 'Bağlı olan araca göre dinamik tespit (Önce 0x5D KLS, sonra 0x7E0 CAN ECM, sonra 0x5B K-Line IMM denenir).'
+      : 'Dynamic detection based on vehicle connected (probes 0x5D KLS, 0x7E0 ECM, 0x5B IMM).';
+    if (badge) { badge.textContent = 'Dinamik Algılama'; badge.style.background = '#64748b'; }
+
+    if (secPin) { secPin.style.opacity = '1'; secPin.querySelectorAll('button,input,select').forEach(el => el.disabled = false); }
+    if (pinTag) { pinTag.textContent = lang === 'tr' ? '● AKTİF' : '● ACTIVE'; pinTag.className = 'tag tag-online'; }
+
+    if (secUds) { secUds.style.opacity = '1'; secUds.querySelectorAll('button,input').forEach(el => el.disabled = false); }
+    if (udsTag) { udsTag.textContent = lang === 'tr' ? '● AKTİF' : '● ACTIVE'; udsTag.className = 'tag tag-online'; }
+  }
+}
+
 function renderProfiles(){
   const select=$('profileSelect');
   const prevProfile=select.value;
@@ -1010,6 +1105,7 @@ function renderProfiles(){
     : (activeObj?.description||'');
   renderServicesForVehicle(prevProfile!==state.activeProfile);
   renderCodingForVehicle();
+  updateImmobilizerModelView();
 }
 
 function renderDevices(){
@@ -1408,8 +1504,12 @@ document.querySelectorAll('[data-immo]').forEach(btn=>{
     }
     stopPolling();
     $('codingLog').textContent=t('working');
-    const r=await api('/api/immo/action','POST',{action:act,pin,seedKey},45000);
+    const r=await api('/api/immo/action','POST',{action:act,pin,seedKey,profile:state.activeProfile},45000);
     $('codingLog').textContent=(r.message?r.message+'\n\n':'')+(Array.isArray(r.log)?r.log.join('\n'):JSON.stringify(r,null,2));
+    if(r?.activeProfileId && r.activeProfileId !== state.activeProfile){
+      state.activeProfile=r.activeProfileId;
+      updateImmobilizerModelView();
+    }
     if(!r.success) throw Error(r.message||'Immobilizer command failed');
   });
 });
@@ -1809,6 +1909,7 @@ function applyLanguage(){
   renderMetrics();
   renderKline();
   renderCodingForVehicle();
+  updateImmobilizerModelView();
   updateCsvButtons();
   updateControls();
 }
