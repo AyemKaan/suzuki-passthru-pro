@@ -137,6 +137,36 @@ Kullanıcının seçtiği araç profiline (`Vehicle Profile`) veya `Auto Detect`
 
 ---
 
+### J. İmmobilizer / Keyless (KLS) Mimarisi ve K-Line Pin 7 Hedef 0x5D (Base 70 / Base 46) Düzeltmesi
+1. **Canlı Araçta Karşılaşılan Hata (`7F 21 12` & Yanıtsızlık) Nedenleri:**
+   - Sekme 3'te İmmobilizer durumu ve kayıtlı anahtar sayısı okunurken `21 A1` / `21 01` ve `21 B0` komutlarında:
+     - CAN `0x7E0` (Bosch EDC16C39 ECM): `TX [21 B0] -> RX [7F 21 12]` (NRC 0x12: Sub-function not supported)
+     - CAN `0x271` ve K-Line `0x5A` (BCM): Yanıt yok.
+     - CAN `0x264` ve K-Line `0x5B` (İmmobilizer): Yanıt yok.
+2. **Kök Neden & Mühendislik Analizi:**
+   - **Transponder Anteni Motor Beynine Bağlı Değildir:** Grand Vitara JB419D (F9Q) modelinde kontak yuvasındaki transponder bobini motor beynine değil, direksiyon kolonunun sağındaki **Keyless Start & İmmobilizer Kontrol Modülü (33970-67J0)**'ne fiziksel olarak bağlıdır. Dizel Bosch EDC16C39 motor beynine `21 B0` (Transponder ID Oku) gönderildiğinde beynin `7F 21 12` (Bu alt fonksiyon desteklenmiyor) dönmesi mimari olarak tamamen doğrudur.
+   - **KLS Modülünün Doğru K-Line Adresi 0x5D'dir:** Yazılım daha önce Benzinli Suzuki'lerin Base 41 / Base 36 (`0x5B`) şablonunu kullanıyordu. Oysa Grand Vitara JB serisinde Keyless & Immobilizer modülü **K-Line Pin 7, Hedef Adresi `0x5D`** (SDT-II Base 70 / Base 46; CAN tarafında ID `0x275`) üzerindedir!
+3. **Uygulanan Çözüm:**
+   - `suzuki_utilities.h` içerisindeki tüm immobilizer aksiyonları (`read_status`, `read_transponder`, `read_pin`, `verify_pin`, `register_key`, `register_remote`, `delete_all_keys`), Grand Vitara için **Base 70 (K-Line Pin 7 hedef `0x5D`)** ve **Base 46 (CAN `0x275`)** öncelikli olacak şekilde güncellendi.
+   - `suzuki_diag_server.cpp` içindeki `/api/kline/imm` rotası hedef adres olarak varsayılan `0x5D` (otomatik `0x5B` fallback) olarak uyarlandı.
+   - Böylece OBD araca tekrar takıldığında immobilizer sorguları doğrudan direksiyon altındaki gerçek `33970-67J0` beynine gidecek ve transponder ID ile kayıtlı anahtar bilgisi sorunsuz okunacaktır.
+
+---
+
+### K. Bosch EDC16C39 (F9Q) Şasi Numarası (VIN) Elektronik Hafıza Analizi
+1. **Mühendislik Tespiti (SDT-II Kataloğu Base 93):**
+   - SDT-II resmi fabrika veritabanı incelenmiştir (`compatibility\catalog\16330983.json`):
+     ```json
+     "supports_vin_registration": "false"
+     ```
+   - Suzuki Bosch EDC16C39 (Renault F9Q 1.9 DDiS) motor kontrol üniteleri fabrikasyon olarak **EEPROM veya Flash hafızasında elektronik Şasi Numarası (VIN) SAKLAMAZ**.
+   - Orijinal Suzuki SDT-II yetkili servis cihazında da bu motora bağlanıldığında VIN hanesi boş / "No VIN Found" olarak gelir. ECM hafızasında Renault Parça No (`8200638060`), HW (`8200518648`), SW (`00C1`), Kalibrasyon No (`5000`) ve Enjektör IMA kodları (`21 AD`) saklanır.
+2. **Kullanıcı Çözümü & Kalıcılık:**
+   - Üst durum çubuğundaki (Topbar) **Şasi No (VIN)** rozetine tıklandığında kullanıcının araç şasi numarasını girmesine olanak tanıyan hızlı giriş kutusu eklendi.
+   - Girilen şasi numarası tarayıcının `localStorage` alanına kalıcı olarak kaydedilir ve OBD takılı olmasa dahi sayfada sürekli olarak görüntülenir.
+
+---
+
 ## 2. Güncel Dosya ve Derleme Durumu
 
 - **C++ Sunucu:** `suzuki_diag_server.cpp` (MSVC x86 derlemesi, 0 hata, 0 uyarı).
