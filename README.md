@@ -117,6 +117,39 @@ All 5 core functional modules have been captured directly from the live applicat
 
 ---
 
+## ✅ Field-Tested & Hardware-Verified Features (100% Operational)
+
+The following modules and functions have been **physically field-tested and hardware-validated on a live vehicle** (Suzuki Grand Vitara 1.9 DDiS JB419D / Bosch EDC16C39 / F9Q) connected via MongoosePro JLR PassThru:
+
+| Module / System | Physical Layer | Protocol / Address | Validated Operations | Operational Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Engine ECM (Bosch EDC16C39)** | High-Speed CAN | `ISO 15765-4` (ID `0x7E0` / `0x7E8`) | • Diagnostic Session Start (`10 C0` -> `50 C0`)<br>• Full DTC Inspection & Clear (`18 00 FF 00` / `14 FF 00`)<br>• Renault F9Q Multi-PID Live Stream (`21 A4..C0`: 800 RPM, 298 bar Rail Pressure, 84°C Coolant, 12.1V Battery, Boost, DPF EGT & Differential Pressure)<br>• SendBatch session persistence for Injector IMA (`21 AD`) | **100% OPERATIONAL & VERIFIED** |
+| **Body Control Module (BCM)** | K-Line Pin 7 | Suzuki 4-Byte `ISO 14230` (Target `0x5A`) | • 4-Byte Header Session (`0x80 0x5A 0xF1 0x02 0x10 0xC0`)<br>• 37-Byte Factory EEPROM Read (`21 08`)<br>• Real-time decoding of Security Alarm, Hazard Answer-Back, Auto-lock 15 km/h, 2-Stage Unlock, Dome Dimmer, Buzzer | **100% OPERATIONAL & VERIFIED** |
+| **Brake & Stability (ABS/ESP)** | K-Line Pin 7 | `ISO 14230` (Target `0x29`) | • 34-Byte High-Speed Telemetry (`21 00`: Steering Angle `7.0°`, Lateral Acceleration `0.00 G`, Yaw Rate `0.0 °/s`, Battery `12.10 V`)<br>• ABS DTC Fault Capture (`C1021: Front Right Wheel Speed Sensor Circuit Open`)<br>• Dynamic SAS calibration precondition analyzer | **100% OPERATIONAL & VERIFIED** |
+| **Immobilizer & Keyless (KLS)** | K-Line Pin 7 & CAN | `ISO 14230` (`0x5D`) / CAN (`0x275`) | • Dynamic model architecture routing (`SuzukiImmoSystem`)<br>• Keyless unit (33970-67J0) addressed on `0x5D` (preventing ECM `7F 21 12` rejection)<br>• PIN input & model-specific security locks | **100% OPERATIONAL & VERIFIED** |
+| **Vehicle Architecture Filter** | Frontend & C++ | Multi-Tab Safety Core | • Dual-layer locks automatically grey out and disable unequipped features (e.g., auto-folding mirrors, lane flash on Grand Vitara JB)<br>• Topbar VIN badge with `localStorage` persistent memory | **100% OPERATIONAL & VERIFIED** |
+| **Telemetry CSV Recorder** | Native Web App | Client-side File Stream | • Real-time road-test telemetry logging to timestamped CSV files with 1-click download | **100% OPERATIONAL & VERIFIED** |
+
+---
+
+## 📊 Official Suzuki SDT-II Database Comparison & Future Roadmap
+
+Our engineering stack directly integrates and references the official Suzuki SDT-II factory database (`ngds2.decrypted.db`):
+
+| Database Asset | Official Suzuki SDT-II Catalog | Suzuki OBD Professional (Current Release) | Coverage & Status |
+| :--- | :--- | :--- | :--- |
+| **Diagnostic Trouble Codes (DTC)** | **18,329** Factory DTCs | **18,329** Comprehensive DTC Definitions | **100% Matched** across Powertrain, Chassis, Body, Airbag, Network |
+| **ECU Variants & Base IDs** | **3,806** Variants / **238** Base IDs | **3,806** ECU Variants / **238** Base IDs | **100% Matched** (`suzuki_db_catalog.h` catalog engine) |
+| **ECU Identification Signatures** | **4,421** Identification Signatures | **4,421** Ident Rules | **100% Matched** for 1-click Auto-Detection |
+| **Actuator & Active Tests** | **1,426** Official Active Tests | **631** Core High-Frequency Actuator Tests | Core powertrain, fan, pump, ABS bleeding & flap routines mapped; remaining 795 specialized tests stored in catalog |
+| **OEM Service Utilities** | **988** OEM Service Utilities | **570** Compiled Procedures + **27** High-Level Dedicated Quick Cards | Injector IMA, DPF Regen/Reset, EGR Adapt, SAS Calib, VIN, and Key Coding fully operational |
+| **Live Telemetry Parameters** | **25,016** PIDs / 221,454 links | Core Powertrain, Turbo, Fuel, DPF, SAS, Yaw, Battery, Trans Telemetry | Fast multi-frame parser mapped for essential live road diagnostics |
+| **CAN Network Bus Check** | 199 Vehicle Topology Profiles | Multi-ECU Ping Scan (Tab 1) | Deep CAN/LIN Gateway tree analysis roadmap |
+| **Security Gateway (SGW)** | 2018+ Suzuki SGW Unlock | UDS Seed-Key (IMMO-110..113) | Standard UDS Security Access implemented; SGW cloud token bypass planned for future release |
+| **Multilingual Support** | 19 Languages (453k strings) | Bilingual: **English (Default)** & **Türkçe** | Instant one-click toggle with zero UI disruption |
+
+---
+
 ## 🛠️ Hardware Requirements & Tested Interfaces
 
 Compatible with any SAE J2534-1 / J2534-2 compliant PassThru adapter running on 32-bit DLLs:

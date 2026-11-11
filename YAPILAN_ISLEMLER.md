@@ -255,7 +255,42 @@ Gerektiğinde araç üzerinde denenebilecek diğer gelişmiş servis fonksiyonla
 
 ---
 
-## 3. Güncel Dosya ve Derleme Durumu
+## 3. Resmî Suzuki SDT-II Veritabanı Karşılaştırması & Eksikler / Gelecek Geliştirmeler Analizi
+
+Orijinal Suzuki SDT-II servis yazılımının şifresi çözülmüş SQLite veritabanı (`compatibility\db-analysis\ngds2.decrypted.db` - 67 tablo) ve katalog dosyaları (`compatibility\catalog\`) ile mevcut yazılımımız karşılaştırıldığında durum şöyledir:
+
+### 📊 Veritabanı Varlık Karşılaştırması
+
+| Veritabanı Varlığı | Resmî SDT-II Veritabanı | Suzuki OBD Professional (Mevcut Durum) | Durum & Değerlendirme |
+| :--- | :--- | :--- | :--- |
+| **Arıza Kodları (DTC)** | **18,329** Adet Fabrika Kodu | **18,329** Adet Açıklamalı DTC | **%100 Eksiksiz.** Motor, Şanzıman, Fren, Gövde, Ağ ve Hava Yastığı kodlarının tamamı mevcuttur. |
+| **ECU Varyantları & Base ID** | **3,806** Varyant / **238** Base ID | **3,806** Varyant / **238** Base ID | **%100 Eksiksiz.** SDT-II mimarisindeki tüm araç kontrol üniteleri `suzuki_db_catalog.h` motoruna işlenmiştir. |
+| **ECU Kimlik İmzaları (Ident)** | **4,421** Bayt İmzası | **4,421** İdent Kuralı | **%100 Eksiksiz.** Otomatik araç ve modül tanıma (`Auto Detect`) bu imzalarla eşleşir. |
+| **Aktif Aktüatör Testleri** | **1,426** Adet Resmî Test | **631** En Çok Kullanılan Çekirdek Test | Yakıt pompası, fan, enjektör kapatma, ABS kanatma gibi ana testler mevcuttur; geriye kalan 795 adet çok nadir/özel alt varyant test katalogda saklıdır. |
+| **OEM Servis Fonksiyonları (Utility)** | **988** Adet Resmî Prosedür | **570** Katalog + **27** Özel Hızlı Kart | Enjektör IMA, DPF rejenerasyon, DPF kül sıfırlama, EGR adaptasyonu, SAS sıfırlama, VIN ve İmmobilizer tam çalışır durumdadır. |
+| **Canlı Veri Parametreleri** | **25,016** PID / 221,454 Bağlantı | Çekirdek Motor, Turbo, Yakıt, DPF, SAS, Savrulma, Akü Telemetrisi | Canlı sürüş ve yol testlerinde ihtiyaç duyulan kritik parametreler yüksek hızlı ve formüllü olarak aktarılmaktadır. |
+| **İmmobilizer & Anahtar Mimarisi** | Model bazlı KLS, IMM ve UDS | `SuzukiImmoSystem` Modüler Mimarisi | Grand Vitara 0x5D, Benzinli 0x7E0, Klasik 0x5B ve 2015+ UDS ayrımı eksiksiz yapılmıştır. |
+
+---
+
+### 🔍 Yazılımımızda Şu An Olmayanlar & Gelecek Geliştirme Yol Haritası (Roadmap)
+
+Kritik arıza teşhis, canlı veri, BCM gizli özellikler, enjektör kodlama ve anahtar programlama açısından **hiçbir hayati eksik bulunmamaktadır.** Yazılım yetkili servis cihazı seviyesinde teşhis yapabilmektedir.
+
+Ancak yazılımı daha da ileriye taşımak için SDT-II veritabanından ileride eklenebilecek opsiyonel özellikler şunlardır:
+
+1. **CAN Bus Ağ Geçidi Topoloji Kontrolü (`Bus Check`):**
+   - SDT-II veritabanındaki `bus_check_vehicle` (199 araç modeli) ve `bus_check_vehicle_dtc_mapping` (7,938 kural) tabloları kullanılarak aracın tüm CAN High, CAN Low ve LIN hatlarındaki modül bağlantı kopukluklarının (`U0100`, `U0121`, `U0140` vb.) tek ekranda grafik ağaç şeması olarak taranması.
+2. **Kalan 418 Adet Özel Servis Fonksiyonunun Canlı Kataloğa Eklenmesi:**
+   - 988 utility'nin 570 tanesi hazır durumdadır. Kalan nadir prosedürler (örneğin bazı pazarlara özel CNG kalibrasyonları, hibrit akü dengeleme testleri) ihtiyaç halinde katalog JSON'larından dinamik olarak çağrılabilir.
+3. **Otomatik Şasi Numarasından (VIN) Model Varyantı Çözümleme:**
+   - Girilen 17 haneli VIN numarasının ilk 7-8 hanesinden (`JSAJTD54V...` -> JB420, `JSAJTD44V...` -> JB419D F9Q) otomatik araç profili seçimi.
+4. **2018+ Modeller için Güvenlik Ağ Geçidi (SGW - Security Gateway) Kilidi:**
+   - Yeni nesil 2018 sonrası Suzuki modellerinde (Swift Sport ZC33S, Jimny JB74 2021+) yer alan korumalı CAN Gateway kilidi için çevrimdışı token desteği.
+
+---
+
+## 4. Güncel Dosya ve Derleme Durumu
 
 - **C++ Sunucu:** `suzuki_diag_server.cpp` (MSVC x86 derlemesi, 0 hata, 0 uyarı).
 - **Web Arayüzü:** `index.html` (Temiz, okunabilir, çit dilli, 5 sekmeli, optimize edilmiş arayüz).
