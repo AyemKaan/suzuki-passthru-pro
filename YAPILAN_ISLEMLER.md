@@ -49,7 +49,7 @@
 - Üst çubuktaki Şasi No kutusuna tıklandığında VIN tek tıkla panoya (clipboard) kopyalanır.
 3. **Arayüz İyileştirmeleri:**
    - **Tab 1 (DTC):** `C1075` kodu tespit edildiğinde doğrudan satır içine **`[🎯 SAS Kalibrasyonunu Başlat (ABS-03)]`** aksiyon butonu eklendi.
-   - **Tab 2 (Canlı Veri):** Canlı veri tablosuna `Direksiyon Açısı (SAS)` (`°`), `Savrulma Hızı` (`°/s`), `Yanal İvme` (`G`) ve yeni **`Direksiyon Sensörü Durumu`** parametresi eklendi. Sensörde besleme yokken kırmızı renkte `<span class="tag-fault">SİNYAL YOK / BESLEME ARIZASI (C1037)</span>` ikazı basılır.
+   - **Tab 2 (Canlı Veri):** Canlı veri tablosuna `Direksiyon Açısı (SAS)` (`°`), `Savrulma Hızı` (`°/s`), `Yanal İvme` (`G`) ve **`Direksiyon Sensörü Durumu`** parametresi eklendi. `21 00` bayt 26 bit 6 (`0x40`) sıfır olduğunda tek başına besleme/zemberek arızası kanıtı sayılamayacağı için arayüzde nötr `DURUM BİTİ PASİF / KALİBRE DEĞİL` rozeti gösterilir; `C1037` veya kablo kontrolü yalnızca aktif `C1037` DTC'si varsa vurgulanır.
    - **Hata Açıklamaları:** Kalibrasyon reddedildiğinde ekranda detaylı Türkçe teşhis ve çözüm rehberi penceresi çıkar.
 
 ---
@@ -189,7 +189,7 @@ Kullanıcının seçtiği araç profiline (`Vehicle Profile`) veya `Auto Detect`
 
 Suzuki Grand Vitara 1.9 DDiS (JB419D) aracı üzerinde bugüne kadar yapılan canlı OBD/J2534 bağlantı testleri, donanım engelleri ve bir sonraki bağlantıda sırada bekleyen işlemler aşağıda kategorize edilmiştir:
 
-### ✅ A. Canlı Araçta Denenen ve %100 Başarılı Olan Fonksiyonlar
+### ✅ A. Canlı Araçta Denenen ve Doğrulanan Fonksiyonlar (Okuma / Tarama / Telemetri)
 
 | # | Sistem / Modül | İletişim Hattı | İşlem / Servis | Sonuç ve Detay |
 | :- | :--- | :--- | :--- | :--- |
@@ -263,14 +263,14 @@ Orijinal Suzuki SDT-II servis yazılımının şifresi çözülmüş SQLite veri
 
 | Veritabanı Varlığı | Resmî SDT-II Veritabanı | Suzuki OBD Professional (Mevcut Durum) | Durum & Değerlendirme |
 | :--- | :--- | :--- | :--- |
-| **Arıza Kodları (DTC)** | **18,329** Adet Fabrika Kodu | **18,329** Adet Açıklamalı DTC | **%100 Eksiksiz.** Motor, Şanzıman, Fren, Gövde, Ağ ve Hava Yastığı kodlarının tamamı mevcuttur. |
-| **ECU Varyantları & Base ID** | **3,806** Varyant / **238** Base ID | **3,806** Varyant / **238** Base ID | **%100 Eksiksiz.** SDT-II mimarisindeki tüm araç kontrol üniteleri `suzuki_db_catalog.h` motoruna işlenmiştir. |
-| **ECU Kimlik İmzaları (Ident)** | **4,421** Bayt İmzası | **4,421** İdent Kuralı | **%100 Eksiksiz.** Otomatik araç ve modül tanıma (`Auto Detect`) bu imzalarla eşleşir. |
-| **Aktif Aktüatör Testleri** | **1,426** Adet Resmî Test | **631** En Çok Kullanılan Çekirdek Test | Yakıt pompası, fan, enjektör kapatma, ABS kanatma gibi ana testler mevcuttur; geriye kalan 795 adet çok nadir/özel alt varyant test katalogda saklıdır. |
-| **OEM Servis Fonksiyonları (Utility)** | **988** Adet Resmî Prosedür | **570** Katalog + **27** Özel Hızlı Kart | Enjektör IMA, DPF rejenerasyon, DPF kül sıfırlama, EGR adaptasyonu, SAS sıfırlama, VIN ve İmmobilizer tam çalışır durumdadır. |
-| **Canlı Veri Parametreleri** | **25,016** PID / 221,454 Bağlantı | Çekirdek Motor, Turbo, Yakıt, DPF, SAS, Savrulma, Akü Telemetrisi | Canlı sürüş ve yol testlerinde ihtiyaç duyulan kritik parametreler yüksek hızlı ve formüllü olarak aktarılmaktadır. |
-| **İmmobilizer & Anahtar Mimarisi** | Model bazlı KLS, IMM ve UDS | `SuzukiImmoSystem` Modüler Mimarisi | Grand Vitara 0x5D, Benzinli 0x7E0, Klasik 0x5B ve 2015+ UDS ayrımı eksiksiz yapılmıştır. |
-| **Servis & Kalibrasyon (Sekme 3)** | Model bazlı filtreleme ve donanım kilidi | Dinamik `IsServiceSupportedForProfile` | Dizel, Benzinli, K-Line ve CAN modellerinde donanımda olmayan servisler frontend'de `disabled` yapılır, backend'de güvenlik koruması ile engellenir. |
+| **Arıza Kodları (DTC)** | **18,329** Adet Fabrika Kodu | **18,329** Adet Açıklamalı DTC | **Veritabanı Eşleşti.** Motor, Şanzıman, Fren, Gövde, Ağ ve Hava Yastığı kod tanımları aktarılmıştır. |
+| **ECU Varyantları & Base ID** | **3,806** Varyant / **238** Base ID | **3,806** ECU Varyant / **238** Base ID | **Veritabanı Eşleşti.** SDT-II kontrol ünitesi kimlik tabloları `suzuki_db_catalog.h` içine aktarılmıştır. |
+| **ECU Kimlik İmzaları (Ident)** | **4,421** Bayt İmzası | **4,421** İdent Kuralı | **Veritabanı Eşleşti.** Otomatik araç ve modül tanıma (`Auto Detect`) bu imzaları kullanır. |
+| **Aktif Aktüatör Testleri** | **1,426** Adet Resmî Test | **631** En Çok Kullanılan Çekirdek Test | Veritabanından uyarlanmıştır; canlı araç üzerinde tek tek test edilmemiştir. |
+| **OEM Servis Fonksiyonları (Utility)** | **988** Adet Resmî Prosedür | **570** Katalog + **27** Özel Hızlı Kart | Prosedürler SDT-II veritabanından uyarlanmıştır; kalıcı CAN/K-Line oturumu ve adım doğrulama kilitleri eklenmiştir, araç üzeri yazma/kodlama testleri beklemektedir. |
+| **Canlı Veri Parametreleri** | **25,016** PID / 221,454 Bağlantı | Çekirdek Motor, Turbo, Yakıt, DPF, SAS, Savrulma, Akü Telemetrisi | Grand Vitara 1.9 DDiS üzerinde ana telemetri canlı doğrulanmıştır; diğer modeller DB uyarlamasıdır. |
+| **İmmobilizer & Anahtar Mimarisi** | Model bazlı KLS, IMM ve UDS | `SuzukiImmoSystem` + İki Aşamalı Oturum Doğrulama | Model/protokol yönlendirmesi ve fail-closed kilit eklenmiştir; canlı araçta anahtar kaydetme/silme henüz denenmemiştir. |
+| **Servis & Kalibrasyon (Sekme 3)** | Model bazlı filtreleme ve donanım kilidi | `ResolveEffectiveProfile` + `IsServiceSupportedForProfile` | Tanımlanmamış `auto` veya bilinmeyen profilde yazma/kodlama işlemleri engellenir. |
 
 ---
 
@@ -290,11 +290,13 @@ Sekme 3 ("Servis & Kalibrasyon") altında yer alan tüm hızlı servis kartları
 
 ---
 
-### 🔍 Yazılımımızda Şu An Olmayanlar & Gelecek Geliştirme Yol Haritası (Roadmap)
+### 🔍 Doğrulama Kapsamı, Eksikler & Gelecek Geliştirme Yol Haritası (Roadmap)
 
-Kritik arıza teşhis, canlı veri, BCM gizli özellikler, enjektör kodlama ve anahtar programlama açısından **hiçbir hayati eksik bulunmamaktadır.** Yazılım yetkili servis cihazı seviyesinde teşhis yapabilmektedir.
+**Doğrulama Gerçeği:**
+- Canlı araçta (Grand Vitara 1.9 DDiS JB419D) **oturum açma, DTC okuma/silme, motor/ABS canlı veri akışı ve BCM `21 08` okuma** fiziksel olarak doğrulanmıştır.
+- Buna karşın **anahtar kaydetme/silme, BCM yazma, enjektör IMA yazma, DPF/EGR/Throttle sıfırlama ve farklı Suzuki şasileri** SDT-II veritabanından uyarlanmış prosedürlerdir ve **canlı araçta henüz sınanmamıştır**. Derleme sırasında çalıştırılan `--check-identity` testi donanım açmaz ve yalnızca veritabanı kimlik/tablo asgari kayıt kontrollerini doğrular; kalibrasyon, kodlama ve J2534 yazma oturumları araç üzerinde test edilmelidir.
 
-Ancak yazılımı daha da ileriye taşımak için SDT-II veritabanından ileride eklenebilecek opsiyonel özellikler şunlardır:
+Yazılımı daha da ileriye taşımak için SDT-II veritabanından ileride eklenebilecek opsiyonel özellikler şunlardır:
 
 1. **CAN Bus Ağ Geçidi Topoloji Kontrolü (`Bus Check`):**
    - SDT-II veritabanındaki `bus_check_vehicle` (199 araç modeli) ve `bus_check_vehicle_dtc_mapping` (7,938 kural) tabloları kullanılarak aracın tüm CAN High, CAN Low ve LIN hatlarındaki modül bağlantı kopukluklarının (`U0100`, `U0121`, `U0140` vb.) tek ekranda grafik ağaç şeması olarak taranması.
@@ -307,9 +309,21 @@ Ancak yazılımı daha da ileriye taşımak için SDT-II veritabanından ileride
 
 ---
 
-## 4. Güncel Dosya ve Derleme Durumu
+## 4. 11 Kasım 2026 Teknik Denetim ve Güvenlik Sertleştirme Düzeltmeleri
 
-- **C++ Sunucu:** `suzuki_diag_server.cpp` (MSVC x86 derlemesi, 0 hata, 0 uyarı).
-- **Web Arayüzü:** `index.html` (Temiz, okunabilir, çit dilli, 5 sekmeli, optimize edilmiş arayüz).
-- **Senkronizasyon:** `c:\Users\kaany\Downloads\Suzuki SDT-II v2.28.01.30\dist` ve `D:\Claude\suzuki` klasörlerine anlık kopyalanıp eşitlendi.
+Bağımsız teknik inceleme sonucunda tespit edilen 6 kritik hata giderilmiştir:
+1. **Çok Adımlı Prosedür Doğrulaması (`SequenceMode`, `ExecuteStagedSequenceOnBase`):** Oturum (`10 C0` / `10 03`) reddedildiğinde sonraki komutların gönderilmesi durduruldu. Enjektör IMA yazma (`3B AD FF` + `3B 7E FE`), VIN yazma (`3B 90` / `2E F1 90`), İmmobilizer anahtar kaydetme/silme (`Stage 1 PIN -> Stage 2 İşlem -> Stage 3 21 A1`), DPF rejenerasyon (`3B AC`) ve yüksek basınç testinde (`31 62` / `21 62`) önceki adım başarısızken son okumanın işlemi başarılı göstermesi engellendi.
+2. **Kalıcı CAN & K-Line Oturum Kapsamları (`CanChannelScope`, `KLineChannelScope`):** `ExecuteSASCalibration`, `ExecuteDPFReset`, `ExecuteOilReset`, `ExecuteEGRInit`, `ExecuteThrottleInit`, `ExecuteInjectorZfcInit`, `ExecuteDPFRegen`, `ExecuteHighPressureTest`, `ExecuteClearAllDTCs`, `ExecuteHexSequenceOnBase` ve `ReadBcmCodingStateJson` fonksiyonları her karede `ptDisconnect()` yapmak yerine işlem boyunca tek kalıcı oturum kanalı kullanacak şekilde güncellendi.
+3. **CAN ve K-Line Varyant Komut Ayrımı:** `ExecuteHiddenFeatureCoding` içinde CAN (`30 xx`) ve Klasik K-Line (`3B xx`) komutları profil/protokol bazlı ayrıldı (`tryCanThenClassic`); aynı diziye karıştırılıp birinin hatasını diğerinin gizlemesi önlendi. Çoklu varyant aramalarında `SequenceMode::TryFirstPositive` ile ilk olumlu yanıtta durulur.
+4. **Nötr SAS Durum Bildirimi:** `21 00` bayt 26 bit 6 (`0x40`) sıfır olduğunda tek başına zemberek/besleme arızası veya `C1037` varsayımı kaldırıldı (`UNSET_OR_UNCALIBRATED` / `DURUM BİTİ PASİF / KALİBRE DEĞİL`); `C1037` ve tesisat uyarısı yalnızca aktif `C1037` DTC'si varsa gösterilir.
+5. **Model & Gerçek ECU Varyant Kilidi:** `ResolveEffectiveProfile()` ve `ResolveDbTargetBase()` ile tanımlanmamış `auto` modunda veya bilinmeyen profillerde BCM kodlama, İmmobilizer yazma/silme/PIN, IMA yazma, VIN yazma ve veritabanından ilk Base ID'ye kör seçim engellendi (fail-closed).
+6. **Doğrulanmamış Voltaj Bölme Düzeltmesinin Kaldırılması:** `ReadBatteryVoltage()` içindeki `24–45 V` aralığını `3`'e bölen doğrulanmamış düzeltme kaldırıldı; J2534 `READ_VBATT` ham mV değeri doğrudan `vbattMv / 1000.0` olarak döndürülür.
+
+---
+
+## 5. Güncel Dosya ve Derleme Durumu
+
+- **C++ Sunucu:** `suzuki_diag_server.cpp` + `suzuki_utilities.h` (MSVC x86 derlemesi tamamlandı, `suzuki_diag_server.exe --check-identity` geçti; donanım açılmadı).
+- **Web Arayüzü:** `index.html` (Temiz, okunabilir, çift dilli, 5 sekmeli arayüz).
+- **Senkronizasyon:** `c:\Users\kaany\Downloads\Suzuki SDT-II v2.28.01.30\dist` ve `D:\Claude\suzuki` klasörlerine kopyalanıp eşitlendi.
 - **Sunucu Adresi:** `http://127.0.0.1:8890` (Çakışmaları önlemek için özel port `8890` olarak ayarlandı; meşgul olması durumunda otomatik olarak `8891..8899` aralığına geçer).

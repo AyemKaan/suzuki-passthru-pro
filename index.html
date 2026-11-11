@@ -1256,9 +1256,9 @@ function renderMetrics(){
       if(st === 'OK'){
         badgeText = lang==='tr' ? 'NORMAL (Aktif)' : 'NORMAL (Active)';
         cls = 'val-cell tag-ok';
-      } else if(st === 'NO_POWER_OR_COMM_FAULT'){
-        badgeText = lang==='tr' ? 'SİNYAL YOK / BESLEME ARIZASI (C1037)' : 'NO SIGNAL / POWER FAULT (C1037)';
-        cls = 'val-cell tag-fault';
+      } else if(st === 'UNSET_OR_UNCALIBRATED'){
+        badgeText = lang==='tr' ? 'DURUM BİTİ PASİF / KALİBRE DEĞİL' : 'STATUS BIT UNSET / UNCALIBRATED';
+        cls = 'val-cell tag-warn';
       } else if(state.live?.absOnline){
         badgeText = lang==='tr' ? 'ABS Çevrimiçi' : 'ABS Online';
       }
