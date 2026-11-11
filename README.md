@@ -99,7 +99,7 @@ All 5 core functional modules have been captured directly from the live applicat
   - **New Calibrations:** `EPB-01` Electronic Parking Brake pad replacement mode, `HVAC-01` Climate air mix flap & compressor init, `HVBMU-01` SHVS Mild-Hybrid / Strong Hybrid BMU reset, and `ADAS-01` Camera/Radar/BSM calibration.
 - **Injector IMA Coding Box:** Cylinder 1–4 individual 7-character IMA code read (`21 AD` / `21 54`) and write (`3B AD FF`) with automated Zero Fuel Calibration (`3B 7E FE`) reset.
 - **17-Digit VIN Read & Write Box:** ECM chassis number read (`1A 90`, `22 F1 90`, `21 90`, `09 02`) and registration/write (`3B 90` / `2E F1 90`) with security access unlock.
-- **Database Catalog:** Searchable catalog of **631 Active Tests** and **570 Utility Procedures**.
+- **Database Catalog:** Searchable catalog of **631 Active Tests** and **570 Utility Procedures** (note: parametric/interactive SDT-II routines are exposed primarily as catalog metadata and single/basic raw command candidates rather than complete interactive multi-step wizards; Nissan-platform Landy C27 UDS BCM Base `169` [`0x745/0x765`] is strictly separated from native Suzuki CAN models).
 
 ### 4. ECU Identification & Direct K-Line Access (Tab 4)
 - Direct ISO 14230 Fast Init terminal for Suzuki Pin 7 K-Line controllers (`0x29` ABS, `0x21` 4WD, `0x5A` BCM, `0x59` SRS, `0x5B` IMM, `0x99` AC, `0x11` ECM, `0x13` TCM, `0x31` EPS).
@@ -141,8 +141,8 @@ Our engineering stack directly integrates and references the official Suzuki SDT
 | **Diagnostic Trouble Codes (DTC)** | **18,329** Factory DTCs | **18,329** Comprehensive DTC Definitions | **100% Matched** across Powertrain, Chassis, Body, Airbag, Network |
 | **ECU Variants & Base IDs** | **3,806** Variants / **238** Base IDs | **3,806** ECU Variants / **238** Base IDs | **100% Matched** (`suzuki_db_catalog.h` catalog engine) |
 | **ECU Identification Signatures** | **4,421** Identification Signatures | **4,421** Ident Rules | **100% Matched** for 1-click Auto-Detection |
-| **Actuator & Active Tests** | **1,426** Official Active Tests | **631** Core High-Frequency Actuator Tests | Core powertrain, fan, pump, ABS bleeding & flap routines mapped; remaining 795 specialized tests stored in catalog |
-| **OEM Service Utilities** | **988** OEM Service Utilities | **570** Compiled Procedures + **27** High-Level Dedicated Quick Cards | Injector IMA, DPF Regen/Reset, EGR Adapt, SAS Calib, VIN, and Key Coding routines adapted from SDT-II with persistent session & step validation guards (live vehicle write tests pending) |
+| **Actuator & Active Tests** | **1,426** Official Active Tests | **631** Core Catalog Entries & Raw Commands | Exposed as searchable catalog metadata / basic hex command candidates (complex interactive/parametric wizards not reproduced end-to-end; live vehicle tests pending) |
+| **OEM Service Utilities** | **988** OEM Service Utilities | **570** Catalog Entries / Command Candidates + **27** Dedicated Quick Cards | Parametric/interactive SDT-II scripts appear as catalog metadata & base command candidates; 27 quick cards add session/step guards, awaiting live vehicle write verification |
 | **Live Telemetry Parameters** | **25,016** PIDs / 221,454 links | Core Powertrain, Turbo, Fuel, DPF, SAS, Yaw, Battery, Trans Telemetry | Fast multi-frame parser mapped for essential live road diagnostics |
 | **CAN Network Bus Check** | 199 Vehicle Topology Profiles | Multi-ECU Ping Scan (Tab 1) | Deep CAN/LIN Gateway tree analysis roadmap |
 | **Security Gateway (SGW)** | 2018+ Suzuki SGW Unlock | UDS Seed-Key (IMMO-110..113) | Standard UDS Security Access implemented; SGW cloud token bypass planned for future release |

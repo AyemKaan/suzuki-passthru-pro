@@ -517,7 +517,7 @@ tr:hover td{background:#e0f2fe}
           </label>
         </div>
         <span id="codingModelSummary" class="mono" style="font-size:11.5px;font-weight:700;color:#0284c7">--</span>
-        <span id="codingReadStatus" class="mono" style="font-size:11px;color:#475569">BCM: 0x7E4 (CAN) / 0x5A (K-Line Pin 7) · UDS 0x745</span>
+        <span id="codingReadStatus" class="mono" style="font-size:11px;color:#475569">BCM: 0x271 (CAN) / 0x5A (K-Line Pin 7) · Landy UDS Base 169: 0x745/0x765</span>
       </div>
       <div class="split">
         <div class="pane pane-tall">
@@ -1114,11 +1114,11 @@ function updateImmobilizerModelView(profId){
     if (secUds) { secUds.style.opacity = '0.45'; secUds.querySelectorAll('button,input').forEach(el => el.disabled = true); }
     if (udsTag) { udsTag.textContent = lang === 'tr' ? '❌ BU MODELDE UDS YOK (KAPALI)' : '❌ NO UDS ON THIS MODEL'; udsTag.className = 'tag tag-fault'; }
   } else if (p === 'suzuki_can') {
-    if (title) title.textContent = lang === 'tr' ? '📌 İmmobilizer Mimarisi: Modern Suzuki UDS CAN (Vitara LY / S-Cross / Swift AZ)' : '📌 Architecture: Modern Suzuki UDS CAN';
+    if (title) title.textContent = lang === 'tr' ? '📌 İmmobilizer Mimarisi: Modern Suzuki CAN / UDS (Vitara LY / S-Cross / Swift AZ / Landy C27)' : '📌 Architecture: Modern Suzuki CAN / UDS';
     if (desc) desc.textContent = lang === 'tr'
-      ? 'Modern Gövde & Keyless Ünitesi (CAN UDS 0x7E4 / 0x750 - ISO 14229). 4 haneli K-Line PIN kullanılmaz; Servis 27 Seed-Key güvenlik erişimi kullanılır.'
-      : 'Modern BCM & Keyless (CAN UDS 0x7E4 / 0x750). Classic 4-digit PIN not supported; Service 27 Seed-Key required.';
-    if (badge) { badge.textContent = 'CAN UDS 0x7E4 · Seed-Key (27 03)'; badge.style.background = '#8b5cf6'; }
+      ? 'Suzuki CAN KLS (0x275) / BCM (0x271) okuma ve anten testi; veritabanındaki Base 169 (27 03 / 31 01 01 0D) UDS Seed-Key akışı ise yalnızca Landy C27 (Nissan BCM 0x745/0x765) eşleştiğinde açılır.'
+      : 'Suzuki CAN KLS (0x275) / BCM (0x271) status; DB Base 169 UDS Seed-Key (27 03 / 31 01 01 0D) is gated exclusively to matched Landy C27 (Nissan BCM 0x745/0x765).';
+    if (badge) { badge.textContent = 'CAN KLS 0x275 · Landy UDS 0x745'; badge.style.background = '#8b5cf6'; }
 
     if (secPin) { secPin.style.opacity = '0.45'; secPin.querySelectorAll('button,input,select').forEach(el => el.disabled = true); }
     if (pinTag) { pinTag.textContent = lang === 'tr' ? '❌ BU MODELDE PIN YOK (UDS GEREKLİ)' : '❌ NO PIN ON UDS'; pinTag.className = 'tag tag-fault'; }
@@ -1544,8 +1544,14 @@ if($('immoPinPreset')) $('immoPinPreset').onchange=()=>{
 document.querySelectorAll('[data-immo]').forEach(btn=>{
   btn.onclick=()=>operation(async()=>{
     const act=btn.dataset.immo;
-    const pin=($('immoPinInput')?.value||'0895').trim();
+    const pin=($('immoPinInput')?.value||'').trim();
     const seedKey=($('immoSeedKeyInput')?.value||'').trim();
+    const pinRequiredActions=['verify_pin','register_key','register_remote','ecu_immo_init','steering_unlock','delete_all_keys'];
+    if(pinRequiredActions.includes(act) && !/^[0-9A-Fa-f]{4}$/.test(pin)){
+      throw Error(lang==='tr'
+        ? 'Geçersiz PIN: Tam olarak 4 haneli hex/sayısal PIN girilmelidir (boş bırakılamaz ve fazla haneler kesilmez).'
+        : 'Invalid PIN: Enter exactly 4 hex/digit characters (never auto-filled or truncated).');
+    }
     const writeActions=['register_key','register_remote','ecu_immo_init','steering_unlock','uds_unlock_register','delete_all_keys'];
     if(act==='delete_all_keys'){
       const msg1=lang==='tr'
