@@ -270,6 +270,23 @@ Orijinal Suzuki SDT-II servis yazılımının şifresi çözülmüş SQLite veri
 | **OEM Servis Fonksiyonları (Utility)** | **988** Adet Resmî Prosedür | **570** Katalog + **27** Özel Hızlı Kart | Enjektör IMA, DPF rejenerasyon, DPF kül sıfırlama, EGR adaptasyonu, SAS sıfırlama, VIN ve İmmobilizer tam çalışır durumdadır. |
 | **Canlı Veri Parametreleri** | **25,016** PID / 221,454 Bağlantı | Çekirdek Motor, Turbo, Yakıt, DPF, SAS, Savrulma, Akü Telemetrisi | Canlı sürüş ve yol testlerinde ihtiyaç duyulan kritik parametreler yüksek hızlı ve formüllü olarak aktarılmaktadır. |
 | **İmmobilizer & Anahtar Mimarisi** | Model bazlı KLS, IMM ve UDS | `SuzukiImmoSystem` Modüler Mimarisi | Grand Vitara 0x5D, Benzinli 0x7E0, Klasik 0x5B ve 2015+ UDS ayrımı eksiksiz yapılmıştır. |
+| **Servis & Kalibrasyon (Sekme 3)** | Model bazlı filtreleme ve donanım kilidi | Dinamik `IsServiceSupportedForProfile` | Dizel, Benzinli, K-Line ve CAN modellerinde donanımda olmayan servisler frontend'de `disabled` yapılır, backend'de güvenlik koruması ile engellenir. |
+
+---
+
+### M. Model Bazlı Servis & Kalibrasyon Güvenlik Mimarisi (Services & Calibrations)
+
+Sekme 3 ("Servis & Kalibrasyon") altında yer alan tüm hızlı servis kartları, Enjektör IMA kodlama paneli ve OEM prosedürleri seçili araç profiline göre dinamik ve korumalı hale getirilmiştir:
+
+1. **Çapraz Model Hata Koruması:**
+   - Grand Vitara Benzinli (JB416/JB420/JB424) seçildiğinde dizel motorlara özgü DPF Rejenerasyonu, DPF Kül Sıfırlama, F9Q Enjektör IMA Kodlama, F9Q EGR Adaptasyonu ve F9Q Boğaz Kelebeği prosedürleri otomatik olarak kilitlenir (`❌ Bu Modelde Yok`).
+   - Grand Vitara 1.9 DDiS seçildiğinde benzinli gaz kelebeği öğrenme, elektrikli direksiyon (EPS - araçta hidrolik direksiyon vardır), elektronik el freni (EPB) ve hibrit (SHVS) fonksiyonları devreden çıkarılır.
+   - Klasik K-Line modellerde CAN'a özgü UDS servisleri gizlenir ve butonlar pasif hale getirilir.
+2. **Çift Kademeli Doğrulama (Frontend & Backend Güvenliği):**
+   - **Frontend:** `renderServicesForVehicle()` fonksiyonu seçili profile göre uyumsuz satırları saydamlaştırır (`opacity: 0.45`), butonları kilitler (`disabled`, cursor `not-allowed`) ve filtre açıkken gizler. Kullanıcı butona doğrudan tıklasa dahi `runService()` model uyuşmazlığını tespit edip işlemi anında durdurur. Benzinli seçildiğinde `imaToolCard` paneli de otomatik olarak kapatılır.
+   - **C++ Backend:** `suzuki_utilities.h` içerisinde `IsServiceSupportedForProfile()` fonksiyonu tanımlanmış; `/api/calibrate/<subpath>` ve `/api/injector/ima` uç noktalarında model kontrolü eklenmiştir. Uyumsuz bir modelden istek gelirse ECU güvenliği için işlem reddedilir (`SERVICE_NOT_SUPPORTED`).
+
+---
 
 ---
 

@@ -193,8 +193,8 @@ tr:hover td{background:#e0f2fe}
     <!-- TAB 3: SERVICE & CALIBRATION -->
     <section id="services" class="view" hidden>
       <div class="service-tools-grid">
-        <div class="tool-card">
-          <div class="tool-card-head"><span data-i="imaBarTitle">Injector IMA Coding (Cyl 1–4):</span><span class="mono" style="font-size:11px;color:#475569">DSL-01 / DSL-05 / DSL-15</span></div>
+        <div class="tool-card" id="imaToolCard">
+          <div class="tool-card-head"><span data-i="imaBarTitle">Injector IMA Coding (Cyl 1–4):</span><span class="mono" id="imaModelHint" style="font-size:11px;color:#475569">DSL-01 / DSL-05 / DSL-15</span></div>
           <div class="toolbar-group">
             <input id="imaCyl1" class="mono" maxlength="9" placeholder="Cyl 1 (7ch)" style="width:86px;text-transform:uppercase">
             <input id="imaCyl2" class="mono" maxlength="9" placeholder="Cyl 2 (7ch)" style="width:86px;text-transform:uppercase">
@@ -825,16 +825,68 @@ function renderServicesForVehicle(autoSyncBase=false){
   const prof=state.activeProfile||'auto';
   const filterOn=Boolean($('filterServiceByVehicle')?.checked) && prof!=='auto';
   const rows=document.querySelectorAll('#serviceRows tr[data-profiles]');
+  let supportedCount=0;
   let shown=0;
+
   rows.forEach(tr=>{
     const list=(tr.dataset.profiles||'').split(',');
-    const match=!filterOn || list.includes(prof);
+    const isSupported=(prof==='auto') ? true : list.includes(prof);
+    if(isSupported) supportedCount++;
+
+    const btn=tr.querySelector('[data-service]');
+    const match=!filterOn || isSupported;
     tr.hidden=!match;
     if(match) shown++;
+
+    if(!isSupported){
+      tr.style.opacity='0.45';
+      tr.style.background='#f8fafc';
+      if(btn){
+        btn.disabled=true;
+        btn.style.opacity='0.5';
+        btn.style.cursor='not-allowed';
+        btn.className='secondary';
+        btn.textContent=lang==='tr'?'❌ Bu Modelde Yok':'❌ Not on this Model';
+        btn.title=lang==='tr'?'Bu servis fonksiyonu seçili araç modelinde desteklenmemektedir.':'This service function is not supported on the selected model.';
+      }
+    } else {
+      tr.style.opacity='1';
+      tr.style.background='';
+      if(btn){
+        btn.disabled=state.busy;
+        btn.style.opacity='1';
+        btn.style.cursor='pointer';
+        btn.className=(btn.dataset.service==='clear')?'danger':'primary';
+        btn.textContent=lang==='tr'?'Başlat':'Run';
+        btn.removeAttribute('title');
+      }
+    }
   });
+
   if($('serviceFilterBadge')){
-    $('serviceFilterBadge').textContent=(lang==='tr'?'Modele Göre Filtrele':'Filter by Model')+' ('+shown+'/'+rows.length+')';
+    $('serviceFilterBadge').textContent=(lang==='tr'?'Sadece Uyumlu Servisleri Göster':'Show Only Supported Services')+' ('+supportedCount+'/'+rows.length+')';
   }
+
+  const imaCard=$('imaToolCard');
+  if(imaCard){
+    const isDieselSupported=(prof==='auto'||prof==='gv_jb419d'||prof==='suzuki_can');
+    imaCard.style.opacity=isDieselSupported?'1':'0.45';
+    imaCard.querySelectorAll('input,button').forEach(el=>{
+      el.disabled=!isDieselSupported||state.busy;
+      el.style.cursor=isDieselSupported?'':'not-allowed';
+    });
+    const imaHint=$('imaModelHint');
+    if(imaHint){
+      if(!isDieselSupported){
+        imaHint.textContent=lang==='tr'?'❌ Benzinli motor: IMA (Dizel Kodlama) bulunmaz':'❌ Petrol engine: IMA code not applicable';
+        imaHint.style.color='#dc2626';
+      } else {
+        imaHint.textContent='DSL-01 / DSL-05 / DSL-15';
+        imaHint.style.color='#475569';
+      }
+    }
+  }
+
   if(autoSyncBase && $('dbCatalogBase')){
     const baseMap={gv_jb419d:'93',gv_petrol:'41',suzuki_can:'41',suzuki_kline:'64',auto:'0'};
     const targetBase=String(lastIdentity?.baseId||baseMap[prof]||'0');
@@ -1272,7 +1324,15 @@ function updateControls(){
   $('rawToggle').disabled=(state.busy&&!state.rawOn)||!state.rawIds.length;
   $('liveToggle').textContent=t(state.liveOn?'stopLive':'startLive');
   $('rawToggle').textContent=t(state.rawOn?'stopRaw':'startRaw');
-  document.querySelectorAll('[data-service]').forEach(b=>{b.disabled=state.busy;b.removeAttribute('title')});
+  const prof=state.activeProfile||'auto';
+  document.querySelectorAll('#serviceRows tr[data-profiles]').forEach(tr=>{
+    const list=(tr.dataset.profiles||'').split(',');
+    const isSupported=(prof==='auto')?true:list.includes(prof);
+    const b=tr.querySelector('[data-service]');
+    if(b){
+      b.disabled=state.busy||!isSupported;
+    }
+  });
 }
 
 async function api(path,method='GET',body=null,timeout=45000){
@@ -1561,6 +1621,21 @@ async function runService(svcKey){
     ipc:'/api/calibrate/ipc',alc:'/api/calibrate/alc',epb:'/api/calibrate/epb',hvac:'/api/calibrate/hvac',
     shvs_hybrid:'/api/calibrate/shvs_hybrid',adas_calib:'/api/calibrate/adas_calib',clear:'/api/dtc/clear'
   };
+
+  const prof=state.activeProfile||'auto';
+  const btn=document.querySelector('#serviceRows [data-service="'+svcKey+'"]');
+  const row=btn?.closest('tr');
+  if(row && prof!=='auto'){
+    const list=(row.dataset.profiles||'').split(',');
+    if(!list.includes(prof)){
+      const msg=lang==='tr'
+        ? 'Bu servis fonksiyonu ('+svcKey+') seçili araç modelinde ('+profileTitle(prof)+') DESTEKLENMEMEKTEDİR.\n\nAraç donanım güvenliği için işlem engellendi.'
+        : 'This service function ('+svcKey+') is NOT supported on the selected model ('+profileTitle(prof)+'). Operation aborted for safety.';
+      alert(msg);
+      return;
+    }
+  }
+
   if(!confirm(t('confirmService')+t(svcKey))) return;
   await operation(async()=>{
     stopPolling();
