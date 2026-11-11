@@ -173,7 +173,7 @@ Download the standalone portable release archive directly from this repository:
 2. Connect your SAE J2534 PassThru interface to your computer's USB port and the car's OBD-II port.
 3. Turn the vehicle's **Ignition ON** (engine stopped for calibrations/coding; engine idling for live sensor streaming).
 4. Double-click `Suzuki_Diyagnostik_Baslat.bat` (or run `suzuki_diag_server.exe`).
-5. The diagnostic dashboard will automatically open in your default browser at `http://127.0.0.1:8080`.
+5. The diagnostic dashboard will automatically open in your default browser at `http://127.0.0.1:8890`.
 6. Select your detected J2534 interface from the dropdown list and click **Connect**.
 
 ### 2. Standalone Architecture & Distribution

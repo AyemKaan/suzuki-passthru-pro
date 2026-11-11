@@ -312,4 +312,4 @@ Ancak yazılımı daha da ileriye taşımak için SDT-II veritabanından ileride
 - **C++ Sunucu:** `suzuki_diag_server.cpp` (MSVC x86 derlemesi, 0 hata, 0 uyarı).
 - **Web Arayüzü:** `index.html` (Temiz, okunabilir, çit dilli, 5 sekmeli, optimize edilmiş arayüz).
 - **Senkronizasyon:** `c:\Users\kaany\Downloads\Suzuki SDT-II v2.28.01.30\dist` ve `D:\Claude\suzuki` klasörlerine anlık kopyalanıp eşitlendi.
-- **Sunucu Adresi:** `http://127.0.0.1:8080` (Arka planda çalışır durumda).
+- **Sunucu Adresi:** `http://127.0.0.1:8890` (Çakışmaları önlemek için özel port `8890` olarak ayarlandı; meşgul olması durumunda otomatik olarak `8891..8899` aralığına geçer).
