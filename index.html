@@ -1705,8 +1705,8 @@ if($('vinReadBtn')) $('vinReadBtn').onclick=()=>operation(async()=>{
     try{localStorage.setItem('diag.customVin',r.vin)}catch{}
   } else if(!r.vin && state.activeProfile==='gv_jb419d'){
     const expl = lang==='tr'
-      ? '\n\nBİLGİLENDİRME (Grand Vitara 1.9 DDiS / Bosch EDC16C39 F9Q):\nSuzuki SDT-II resmi mühendislik veri tabanına göre (Base 93), bu motor kontrol ünitesi fabrikasyon olarak elektronik VIN kaydını desteklememektedir (supports_vin_registration = false).\nŞasi numaranızı yukarıdaki kutuya girerek kaydedebilir veya üst durum çubuğundaki Şasi No alanına tıklayarak girebilirsiniz.'
-      : '\n\nNOTE (Grand Vitara 1.9 DDiS / Bosch EDC16C39 F9Q):\nAccording to Suzuki SDT-II engineering specifications (Base 93), this ECM variant does not store electronic VIN in memory (supports_vin_registration = false).\nYou can manually enter your VIN in the box above or click the Chassis/VIN badge in the topbar.';
+      ? '\n\nBİLGİLENDİRME (Grand Vitara 1.9 DDiS / Bosch EDC16C39 F9Q):\nResmi mühendislik veri tabanına göre (Base 93), bu motor kontrol ünitesi fabrikasyon olarak elektronik VIN kaydını desteklememektedir (supports_vin_registration = false).\nŞasi numaranızı yukarıdaki kutuya girerek kaydedebilir veya üst durum çubuğundaki Şasi No alanına tıklayarak girebilirsiniz.'
+      : '\n\nNOTE (Grand Vitara 1.9 DDiS / Bosch EDC16C39 F9Q):\nAccording to OEM engineering specifications (Base 93), this ECM variant does not store electronic VIN in memory (supports_vin_registration = false).\nYou can manually enter your VIN in the box above or click the Chassis/VIN badge in the topbar.';
     $('serviceLog').textContent=(r.message?r.message:'')+(Array.isArray(r.log)?'\n'+r.log.join('\n'):'')+expl;
     return;
   }

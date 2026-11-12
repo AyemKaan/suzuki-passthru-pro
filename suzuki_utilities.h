@@ -2171,7 +2171,7 @@ inline std::string ExecuteVinActionJson(const std::string& action, const std::st
             message = "Guvenlik Kilidi: Arac profili / ECU kimligi dogrulanmadan VIN yazilamaz (Etkin profil: " + effProf + "). Once 'Arac Tara' yapin veya model secin.";
             log.push_back(message);
         } else if (effProf == "gv_jb419d") {
-            message = "Grand Vitara 1.9 DDiS (F9Q Base 93 Bosch EDC16C39) SDT-II PWTR-02 VIN yazma proseduru desteklememektedir (supports_vin_registration = false).";
+            message = "Grand Vitara 1.9 DDiS (F9Q Base 93 Bosch EDC16C39) PWTR-02 VIN yazma proseduru desteklememektedir (supports_vin_registration = false).";
             log.push_back(message);
         } else if (clean.size() != 17) {
             message = "VIN must be exactly 17 alphanumeric characters (entered: " + std::to_string(clean.size()) + ").";
