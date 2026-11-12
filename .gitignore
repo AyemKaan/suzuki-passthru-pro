@@ -10,11 +10,6 @@
 dist/
 temp_cdp_profile/
 
-# Source Code Protection (Keep closed-source on GitHub)
-suzuki_diag_server.cpp
-suzuki_*.h
-build_diag.cmd
-
 # Databases & Decrypted OEM Assets
 *.db
 *.decrypted.db
