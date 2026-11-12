@@ -3290,7 +3290,7 @@ int main(int argc, char** argv)
         return 0;
     }
     std::cout << "=======================================================" << std::endl;
-    std::cout << " Suzuki Multi-Vehicle Diagnostic Server (J2534) [BETA] " << std::endl;
+    std::cout << " Suzuki PassThru Pro (J2534 Diagnostic Suite)         " << std::endl;
     std::cout << " Lead Engineer: Ayem Kaan Yildirim                    " << std::endl;
     std::cout << " Website: https://kaanyildirim.com                     " << std::endl;
     std::cout << " Verified on Grand Vitara 1.9 DDiS. Other models exper." << std::endl;

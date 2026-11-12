@@ -1,8 +1,8 @@
-# Suzuki OBD Professional (J2534 Diagnostic Suite) — BETA
+# Suzuki PassThru Pro (J2534 Diagnostic Suite) — Open Source
 
 <div align="center">
 
-![Suzuki OBD Professional Banner](docs/screenshots/03_service_calibrations.png)
+![Suzuki PassThru Pro Banner](docs/screenshots/03_service_calibrations.png)
 
 ### Professional Multi-ECU Diagnostic, Calibration, Coding & Key Programming Software for Suzuki Vehicles
 **Lead Engineer:** [Ayem Kaan Yildirim — Automotive Systems & Energy Storage Engineer](https://kaanyildirim.com/)  
@@ -68,7 +68,7 @@ All 5 core functional modules have been captured directly from the live applicat
 
 ## 🌟 Overview & Architecture
 
-**Suzuki OBD Professional** is a standalone, high-performance diagnostic suite specifically engineered for Suzuki vehicles using any compliant **SAE J2534 PassThru** interface (MongoosePro JLR/Toyota, Scanmatik 2 Pro, Tactrix OpenPort 2.0, VCX SE, Chipsoft, etc.).
+**Suzuki PassThru Pro** is a standalone, high-performance diagnostic suite specifically engineered for Suzuki vehicles using any compliant **SAE J2534 PassThru** interface (MongoosePro JLR/Toyota, Scanmatik 2 Pro, Tactrix OpenPort 2.0, VCX SE, Chipsoft, etc.).
 
 - **Standalone Native Core:** Compiled into a single 32-bit Windows executable (`suzuki_diag_server.exe`) with zero external runtime dependencies.
 - **Embedded Web Dashboard:** Responsive single-screen interface (`index.html`) with English set as permanent default and instant one-click Turkish localization.
@@ -136,7 +136,7 @@ The following read, scan, and telemetry functions have been **physically field-t
 
 Our engineering stack directly integrates and references standard factory OEM diagnostic catalogs:
 
-| Database Asset | Factory OEM Reference Catalog | Suzuki OBD Professional (Current Release) | Coverage & Status |
+| Database Asset | Factory OEM Reference Catalog | Suzuki PassThru Pro (Current Release) | Coverage & Status |
 | :--- | :--- | :--- | :--- |
 | **Diagnostic Trouble Codes (DTC)** | **18,329** Factory DTCs | **18,329** Comprehensive DTC Definitions | **100% Matched** across Powertrain, Chassis, Body, Airbag, Network |
 | **ECU Variants & Base IDs** | **3,806** Variants / **238** Base IDs | **3,806** ECU Variants / **238** Base IDs | **100% Matched** (`suzuki_db_catalog.h` catalog engine) |
