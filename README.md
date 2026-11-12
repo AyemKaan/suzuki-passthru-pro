@@ -166,7 +166,7 @@ Compatible with any SAE J2534-1 / J2534-2 compliant PassThru adapter running on 
 
 ### 1. Pre-Compiled Standalone Release (Ready to Use)
 Download the standalone portable release archive directly from this repository:
-- **Download:** [`docs/Suzuki_OBD_Professional_v2.28.01_Beta.zip`](docs/Suzuki_OBD_Professional_v2.28.01_Beta.zip)
+- **Download Ready-to-Run Package:** [Suzuki PassThru Pro v2.28.01 (BETA Release)](https://github.com/AyemKaan/suzuki-passthru-pro/releases/tag/v2.28.01-beta)
 
 **Setup Steps:**
 1. Extract the downloaded `.zip` file into any local directory.
