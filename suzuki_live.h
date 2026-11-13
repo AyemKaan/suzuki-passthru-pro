@@ -63,7 +63,7 @@ inline DbBaseComm GetDbBaseComm(int baseId) {
         case 101: case 104: case 105: return {true, 0x7A, 0, 0}; // SUZUKI KWP ECM F9Q/K9K/F8Q (0x7A)
         case 109: case 115: return {true, 0x26, 0, 0}; // SUZUKI KWP IMMOBILIZER JOHNSON
         case 110: case 116: return {true, 0xC0, 0, 0}; // SUZUKI KWP IMMOBILIZER SIEMENS
-        case 126: return {true, 0x33, 0, 0}; // SUZUKI OBD-II-KWP
+        case 126: return {true, 0x11, 0, 0}; // SUZUKI OBD-II-KWP (ReqTargetAddr 0x11 in official DB)
         case 131: return {false, 0, 0x7B7, 0x7BA}; // NISSAN CAN-1 AVM
         case 132: case 164: return {false, 0, 0x75D, 0x77D}; // NISSAN CAN-1 / UDS-CAN ADAS4
         case 133: case 190: return {false, 0, 0x7E4, 0x7EC}; // SUZUKI CAN / UDS BMU

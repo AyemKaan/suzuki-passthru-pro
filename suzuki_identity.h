@@ -4,9 +4,8 @@
 
 inline bool IsUdsBase(int baseId) {
     return baseId == 90 || baseId == 147 || baseId == 155 ||
-           (baseId >= 162 && baseId <= 178) ||
-           (baseId >= 184 && baseId <= 200) ||
-           (baseId >= 224 && baseId <= 257);
+           (baseId >= 162 && baseId <= 179) ||
+           (baseId >= 184 && baseId <= 200);
 }
 
 inline bool IsF9QBase(int baseId) {

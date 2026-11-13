@@ -94,7 +94,7 @@ bool ValidKLineStart(const PASSTHRU_MSG& msg, unsigned char target) {
     if (msg.ProtocolID != ISO14230 || (msg.RxStatus & 0x09) != 0 || msg.DataSize < 4 || msg.DataSize > sizeof(msg.Data)) return false;
     size_t end = msg.DataSize;
     if (msg.ExtraDataIndex >= 3 && msg.ExtraDataIndex < end) end = msg.ExtraDataIndex;
-    if ((msg.Data[0] & 0xC0) != 0x80 || msg.Data[1] != 0xF1 || msg.Data[2] != target) return false;
+    if ((msg.Data[0] & 0xC0) != 0x80 || (msg.Data[1] != 0xF1 && msg.Data[1] != 0xFC) || msg.Data[2] != target) return false;
     size_t length = msg.Data[0] & 0x3F;
     size_t start = 3;
     if (length == 0) {
@@ -111,7 +111,7 @@ bool ExtractKLinePayload(const PASSTHRU_MSG& msg, unsigned char target, std::vec
     size_t end = msg.DataSize;
     if (msg.ExtraDataIndex >= 3 && msg.ExtraDataIndex < end) end = msg.ExtraDataIndex;
     if ((msg.Data[0] & 0xC0) == 0x80) {
-        if (msg.Data[1] != 0xF1 || msg.Data[2] != target) return false;
+        if ((msg.Data[1] != 0xF1 && msg.Data[1] != 0xFC) || msg.Data[2] != target) return false;
         size_t length = msg.Data[0] & 0x3F;
         size_t start = 3;
         if (length == 0) {
