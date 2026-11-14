@@ -463,7 +463,7 @@ public:
         unsigned long n = 1;
         if (ptWrite(ch, &tx, &n, timeoutMs) != 0 || n == 0) return false;
 
-        const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
         while (std::chrono::steady_clock::now() < deadline) {
             PASSTHRU_MSG rx = {};
             n = 1;
@@ -477,7 +477,10 @@ public:
 
             if (payload[0] == 0x7F) {
                 if (payload.size() < 3 || payload[1] != req[0]) continue;
-                if (payload[2] == 0x78) continue;
+                if (payload[2] == 0x78) {
+                    deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2500);
+                    continue;
+                }
                 resp = std::move(payload);
                 return true;
             }
@@ -577,7 +580,7 @@ public:
         long ret = ptWrite(channelId, &txMsg, &numMsgs, timeoutMs);
         if (ret != 0 || numMsgs == 0) return false;
 
-        const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
         while (std::chrono::steady_clock::now() < deadline) {
             PASSTHRU_MSG rxMsg = {};
             numMsgs = 1;
@@ -598,7 +601,10 @@ public:
             std::vector<unsigned char> payload(rxMsg.Data + 4, rxMsg.Data + end);
             if (payload[0] == 0x7F) {
                 if (payload.size() < 3 || payload[1] != req[0]) continue;
-                if (payload[2] == 0x78) continue; // Response pending, keep waiting
+                if (payload[2] == 0x78) {
+                    deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2500);
+                    continue; // Response pending, extend P2* timeout
+                }
                 resp = std::move(payload);
                 return true;
             } else {
@@ -2231,17 +2237,18 @@ ProcedureResult ExecuteClearAllDTCs() {
     std::vector<unsigned char> resp;
     int clearedCount = 0;
 
-    // 1. Clear ECM (0x7E0): Try 14 FF FF FF (SUZUKI CAN ECM BOSCH F9Q) then 14 FF 00 (SUZUKI CAN ECM)
+    // 1. Clear ECM (0x7E0): Try 14 FF 00 (KWP2000/Bosch F9Q) then 14 FF FF FF (UDS)
     res.log.push_back("ECM (0x7E0) DTC hafizasi siliniyor...");
     bool ecmCanResponded = false;
     {
         CanChannelScope ecmScope(g_diag, 0x7E0, 0x7E8);
-        if (ecmScope.open && ecmScope.Transact({0x10, 0xC0}, resp, 300) && !resp.empty() && resp[0] == 0x50) {
+        if (ecmScope.open && ecmScope.Transact({0x10, 0xC0}, resp, 350) && !resp.empty() && resp[0] == 0x50) {
             ecmCanResponded = true;
             bool ecmCleared = false;
-            if (ecmScope.Transact({0x14, 0xFF, 0xFF, 0xFF}, resp, 500) && !resp.empty() && resp[0] == 0x54) {
+            std::vector<unsigned char> clearResp;
+            if (ecmScope.Transact({0x14, 0xFF, 0x00}, clearResp, 900) && !clearResp.empty() && clearResp[0] == 0x54) {
                 ecmCleared = true;
-            } else if (ecmScope.Transact({0x14, 0xFF, 0x00}, resp, 500) && !resp.empty() && resp[0] == 0x54) {
+            } else if (ecmScope.Transact({0x14, 0xFF, 0xFF, 0xFF}, clearResp, 900) && !clearResp.empty() && clearResp[0] == 0x54) {
                 ecmCleared = true;
             }
             ecmScope.Transact({0x10, 0x81}, resp, 300);
@@ -2249,17 +2256,22 @@ ProcedureResult ExecuteClearAllDTCs() {
                 clearedCount++;
                 res.log.push_back("ECM (0x7E0): Ariza hafizasi basariyla temizlendi (0x54 onaylandi).");
             } else {
-                res.log.push_back("ECM (0x7E0): Oturum acildi ancak silme komutu onaylanmadi (" + HexBytes(resp) + ").");
+                res.log.push_back("ECM (0x7E0): Oturum acildi ancak silme komutu onaylanmadi (" + HexBytes(clearResp) + ").");
             }
         }
     }
     if (!ecmCanResponded) {
         if (g_activeProfileId != "gv_jb419d" && g_activeProfileId != "suzuki_can") {
             std::vector<std::vector<unsigned char>> kResps;
-            if (g_diag.RunKLineSession(0x11, {{0x14, 0xFF, 0x00}}, kResps, 350) &&
-                !kResps.empty() && !kResps[0].empty() && kResps[0][0] == 0x54) {
-                clearedCount++;
-                res.log.push_back("ECM (K-Line 0x11): Ariza hafizasi basariyla temizlendi (0x54 onaylandi).");
+            if (g_diag.RunKLineSession(0x11, {{0x14, 0x00, 0x00}, {0x14, 0xFF, 0x00}}, kResps, 500) &&
+                !kResps.empty()) {
+                for (const auto& kr : kResps) {
+                    if (!kr.empty() && kr[0] == 0x54) {
+                        clearedCount++;
+                        res.log.push_back("ECM (K-Line 0x11): Ariza hafizasi basariyla temizlendi (0x54 onaylandi).");
+                        break;
+                    }
+                }
             } else {
                 res.log.push_back("ECM (0x7E0 / 0x11): Yanit alinamadi.");
             }
@@ -2268,36 +2280,42 @@ ProcedureResult ExecuteClearAllDTCs() {
         }
     }
 
-    // 2. Clear other modules (14 FF 00) on CAN and fallback to K-Line if applicable
+    // 2. Clear other modules on CAN and K-Line
     auto activeModules = GetActiveSuzukiModules();
     for (const auto& mod : activeModules) {
         if (mod.shortName == "ECM") continue;
         bool modCleared = false;
-        if (mod.txId != 0) {
+        bool skipCanForJb419dKlineMod = (g_activeProfileId == "gv_jb419d" && mod.klineAddr != 0);
+        if (mod.txId != 0 && !skipCanForJb419dKlineMod) {
             std::string addrStr = HexAddr(mod.txId, 3);
             CanChannelScope modScope(g_diag, mod.txId, mod.rxId);
             if (modScope.open &&
-                ((modScope.Transact({0x10, 0xC0}, resp, 180) && !resp.empty() && resp[0] == 0x50) ||
-                 (modScope.Transact({0x10, 0x81}, resp, 180) && !resp.empty() && resp[0] == 0x50))) {
-                if (modScope.Transact({0x14, 0xFF, 0x00}, resp, 400) && !resp.empty() && resp[0] == 0x54) {
+                ((modScope.Transact({0x10, 0xC0}, resp, 220) && !resp.empty() && resp[0] == 0x50) ||
+                 (modScope.Transact({0x10, 0x81}, resp, 220) && !resp.empty() && resp[0] == 0x50))) {
+                std::vector<unsigned char> clearResp;
+                if (modScope.Transact({0x14, 0xFF, 0x00}, clearResp, 600) && !clearResp.empty() && clearResp[0] == 0x54) {
                     clearedCount++;
                     modCleared = true;
                     res.log.push_back(mod.shortName + " (" + addrStr + "): Ariza hafizasi temizlendi (0x54 onaylandi).");
                 } else {
-                    res.log.push_back(mod.shortName + " (" + addrStr + "): Silme komutu reddedildi (" + HexBytes(resp) + ").");
+                    res.log.push_back(mod.shortName + " (" + addrStr + "): Silme komutu reddedildi (" + HexBytes(clearResp) + ").");
                 }
                 modScope.Transact({0x10, 0x81}, resp, 180);
             }
         }
         if (!modCleared && mod.klineAddr != 0) {
+            unsigned char kGrp = 0x40;
+            if (mod.klineAddr == 0x5A || mod.klineAddr == 0x59 || mod.klineAddr == 0x5D || mod.klineAddr == 0x5B || mod.klineAddr == 0x5C || mod.klineAddr == 0x99) {
+                kGrp = 0x80;
+            } else if (mod.klineAddr == 0x11 || mod.klineAddr == 0x10 || mod.klineAddr == 0x13) {
+                kGrp = 0x00;
+            }
             std::vector<std::vector<unsigned char>> kClearReqs = {
-                {0x14, 0xFF, 0x00},
-                {0x14, 0x40, 0x00},
-                {0x14, 0x80, 0x00},
-                {0x14, 0x00, 0x00}
+                {0x14, kGrp, 0x00},
+                {0x14, 0xFF, 0x00}
             };
             std::vector<std::vector<unsigned char>> kResps;
-            if (g_diag.RunKLineSession(mod.klineAddr, kClearReqs, kResps, 350)) {
+            if (g_diag.RunKLineSession(mod.klineAddr, kClearReqs, kResps, 600)) {
                 for (const auto& kr : kResps) {
                     if (!kr.empty() && kr[0] == 0x54) {
                         clearedCount++;
