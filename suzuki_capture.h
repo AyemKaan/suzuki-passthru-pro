@@ -60,10 +60,13 @@ std::string DecodeCapturedFreezeFrame(const std::vector<unsigned char>& response
             << ",\"payloadHex\":" << JsonString(HexBytes(response, 3)) << "}";
         return out.str();
     }
-    if (response.size() >= 2 && response[0] == 0x61 && response[1] == 0x87) {
+    if (response.size() >= 2 && response[0] == 0x61 &&
+        (response[1] == 0x87 || response[1] == 0x82 || response[1] == 0xC1)) {
         std::ostringstream out;
-        out << "{\"ok\":true,\"protocol\":\"KWP_21_87\",\"payloadHex\":" << JsonString(HexBytes(response, 2)) << "}";
+        out << "{\"ok\":true,\"protocol\":\"KWP_21_" << HexAddr(response[1], 2).substr(2)
+            << "\",\"recordId\":" << static_cast<int>(response[1])
+            << ",\"payloadHex\":" << JsonString(HexBytes(response, 2)) << "}";
         return out.str();
     }
-    return "{\"ok\":false,\"error\":\"Expected 59 04 (UDS FreezeFrame), 52 (KWP ReadFreezeFrameData), or 61 87 (KWP Snapshot)\"}";
+    return "{\"ok\":false,\"error\":\"Expected 59 04 (UDS FreezeFrame), 52 (KWP ReadFreezeFrameData), or 61 87/82/C1 (KWP Snapshot)\"}";
 }

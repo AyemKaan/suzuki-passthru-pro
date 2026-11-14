@@ -392,17 +392,21 @@ inline ProcedureResult ExecuteHexSequenceOnBase(
             res.message = label + ": K-Line (" + HexAddr(kTarget, 2) + ") uzerinden ECU yanit vermedi.";
             return false;
         }
-        bool sessPos = false;
-        std::vector<unsigned char> sessResp;
-        kScope.Transact({0x10, 0xC0}, sessResp, 450, &sessPos);
-        res.log.push_back("TX [10 C0] -> RX [" + (sessResp.empty() ? "YOK" : HexBytes(sessResp)) + "]");
-        if (!sessPos || sessResp.empty() || sessResp[0] != 0x50) {
-            res.success = false;
-            res.step = sessResp.empty() ? "KLINE_NO_RESP" : "KLINE_SESSION_REJECTED";
-            res.message = sessResp.empty()
-                ? (label + ": K-Line (" + HexAddr(kTarget, 2) + ") uzerinden ECU yanit vermedi.")
-                : (label + " (K-Line " + HexAddr(kTarget, 2) + "): Diagnostik oturum (10 C0) reddedildi; diger komutlar durduruldu.");
-            return false;
+        if (kTarget == 0x11 || kTarget == 0x10 || kTarget == 0x7A) {
+            bool sessPos = false;
+            std::vector<unsigned char> sessResp;
+            kScope.Transact({0x10, 0xC0}, sessResp, 450, &sessPos);
+            res.log.push_back("TX [10 C0] -> RX [" + (sessResp.empty() ? "YOK" : HexBytes(sessResp)) + "]");
+            if (!sessPos || sessResp.empty() || sessResp[0] != 0x50) {
+                res.success = false;
+                res.step = sessResp.empty() ? "KLINE_NO_RESP" : "KLINE_SESSION_REJECTED";
+                res.message = sessResp.empty()
+                    ? (label + ": K-Line (" + HexAddr(kTarget, 2) + ") uzerinden ECU yanit vermedi.")
+                    : (label + " (K-Line " + HexAddr(kTarget, 2) + "): Diagnostik oturum (10 C0) reddedildi; diger komutlar durduruldu.");
+                return false;
+            }
+        } else {
+            res.log.push_back("K-Line (" + HexAddr(kTarget, 2) + ") Fast Init (81 -> C1) diagnostik oturumu hazir.");
         }
         size_t nonEmptyCmds = 0;
         size_t positiveCount = 0;
@@ -544,12 +548,17 @@ inline ProcedureResult ExecuteStagedSequenceOnBase(
             return false;
         }
         bool pos = false;
-        kScope.Transact({0x10, 0xC0}, resp, 450, &pos);
-        res.log.push_back("TX [10 C0] -> RX [" + (resp.empty() ? "YOK" : HexBytes(resp)) + "]");
-        if (!pos) {
-            res.step = "KLINE_SESSION_REJECTED";
-            res.message = label + ": K-Line oturumu (10 C0) reddedildi.";
-            return false;
+        bool needExplicit10C0 = (kTarget == 0x11 || kTarget == 0x10 || kTarget == 0x7A);
+        if (needExplicit10C0) {
+            kScope.Transact({0x10, 0xC0}, resp, 450, &pos);
+            res.log.push_back("TX [10 C0] -> RX [" + (resp.empty() ? "YOK" : HexBytes(resp)) + "]");
+            if (!pos) {
+                res.step = "KLINE_SESSION_REJECTED";
+                res.message = label + ": K-Line oturumu (10 C0) reddedildi.";
+                return false;
+            }
+        } else {
+            res.log.push_back("K-Line (" + HexAddr(kTarget, 2) + ") Fast Init (81 -> C1) oturumu aktif.");
         }
 
         if (!preCheckCmd.empty()) {
@@ -765,7 +774,25 @@ inline ProcedureResult ExecuteDbActiveTest(const std::string& testName, const st
         r.message = targetErr;
         return r;
     }
-    return ExecuteHexSequenceOnBase(baseId, std::string("Aktif Test [") + found->testName + " - " + found->titleTr + " / " + modeLabel + "]", {bytes}, SequenceMode::RequireAll);
+    std::vector<std::vector<unsigned char>> candidateCmds = {bytes};
+    if (baseId == 93 && bytes.size() == 4 && bytes[0] == 0x30) {
+        unsigned char lid = bytes[1];
+        if (mode == "stop") {
+            candidateCmds = {
+                {0x30, lid, 0x11},
+                {0x30, lid, 0x11, 0x00},
+                {0x30, lid, 0x00}
+            };
+        } else {
+            candidateCmds = {
+                {0x30, lid, 0x00},
+                {0x30, lid, 0x00, 0x01},
+                {0x30, lid, 0x00, 0x00},
+                bytes
+            };
+        }
+    }
+    return ExecuteHexSequenceOnBase(baseId, std::string("Aktif Test [") + found->testName + " - " + found->titleTr + " / " + modeLabel + "]", candidateCmds, SequenceMode::TryFirstPositive);
 }
 
 inline ProcedureResult ExecuteDbUtility(const std::string& codeOrScript, int overrideBaseId) {
@@ -1074,7 +1101,7 @@ inline std::string ReadBcmCodingStateJson() {
         }
     };
 
-    // 1. Try CAN BCM candidates using persistent CAN channel scope per ECU
+    // 1. Try CAN BCM candidates using persistent CAN channel scope per ECU (skip on K-Line BCM profiles gv_jb419d / suzuki_kline)
     struct CanBcmCandidate { unsigned long tx; unsigned long rx; const char* tag; };
     const CanBcmCandidate canBcmTargets[] = {
         {0x271, 0x671, "CAN_BCM_271"},
@@ -1082,7 +1109,9 @@ inline std::string ReadBcmCodingStateJson() {
         {0x7E4, 0x7EC, "CAN_BCM_7E4"}
     };
 
+    bool skipCanBcm = (g_activeProfileId == "gv_jb419d" || g_activeProfileId == "suzuki_kline");
     for (const auto& target : canBcmTargets) {
+        if (skipCanBcm) break;
         logLines.push_back(std::string("Reading BCM Configuration on CAN (") + HexAddr(target.tx, 3) + "/" + HexAddr(target.rx, 3) + " -> 21 08)...");
         CanChannelScope canScope(g_diag, target.tx, target.rx);
         if (!canScope.open) continue;
@@ -1482,7 +1511,7 @@ inline ProcedureResult ExecuteImmobilizerAction(const std::string& action, const
     }
 
     // Guvenlik Kilidi 0: Tanimlanmamis 'auto' modunda yazma/silme/PIN/guvenlik komutlari yasaktir
-    bool isReadOnlyImmo = (action == "read_status" || action == "read_transponder");
+    bool isReadOnlyImmo = (action == "read_status" || action == "status" || action == "read_transponder");
     if (immoSys == SuzukiImmoSystem::UNIVERSAL_AUTO && !isReadOnlyImmo) {
         res.success = false;
         res.step = "UNIDENTIFIED_BLOCKED";
@@ -1561,7 +1590,7 @@ inline ProcedureResult ExecuteImmobilizerAction(const std::string& action, const
     }
 
     // Read Registered Key Count, Date & Immobilizer Status (21 A1 -> 61 A1 / 22 01 A1 -> 62 01 A1, No PIN required)
-    if (action == "read_status") {
+    if (action == "read_status" || action == "status") {
         ProcedureResult r1;
         r1.step = "IMMO_read_status";
         std::vector<unsigned char> matchedResp;
@@ -2085,15 +2114,21 @@ inline std::string ExecuteVinActionJson(const std::string& action, const std::st
 
     if (action == "read") {
         std::vector<unsigned char> resp;
-        log.push_back("Reading VIN from ECM (CAN 0x7E0 -> 10 C0, then 1A 90 / 22 F1 90 / 21 90 / 09 02)...");
+        log.push_back("Reading VIN from ECM (CAN 0x7E0 -> 10 C0, then 1A 90 / 21 81 / 21 90 / 22 F1 90 / 09 02)...");
         std::vector<std::vector<unsigned char>> canVinReqs = {
             {0x10, 0xC0},
             {0x1A, 0x90},
+            {0x21, 0x81},
             {0x21, 0x90},
             {0x22, 0xF1, 0x90}
         };
         std::vector<std::vector<unsigned char>> canVinResps;
+        bool canEcmResponded = false;
+        bool f9qEmptyVinSlot = false;
         if (SendBatch(g_diag, 0x7E0, 0x7E8, canVinReqs, canVinResps, 600)) {
+            if (!canVinResps.empty() && !canVinResps[0].empty() && canVinResps[0][0] == 0x50) {
+                canEcmResponded = true;
+            }
             for (size_t i = 1; i < canVinResps.size(); ++i) {
                 const auto& kr = canVinResps[i];
                 if (kr.size() >= 19 && (kr[0] == 0x5A || kr[0] == 0x61 || kr[0] == 0x62)) {
@@ -2102,11 +2137,14 @@ inline std::string ExecuteVinActionJson(const std::string& action, const std::st
                         ok = true;
                         log.push_back("CAN ECM RX: " + HexBytes(kr) + " -> VIN: " + vin);
                         break;
+                    } else if (kr[0] == 0x61 && kr[1] == 0x81) {
+                        f9qEmptyVinSlot = true;
+                        log.push_back("CAN ECM 21 81 RX (Factory unprogrammed VIN slot): " + HexBytes(kr));
                     }
                 }
             }
         }
-        if (!ok) {
+        if (!ok && !f9qEmptyVinSlot) {
             const unsigned long obdTxIds[2] = {0x7DF, 0x7E0};
             for (unsigned long obdTx : obdTxIds) {
                 CanChannelScope obdScope(g_diag, obdTx, 0x7E8);
@@ -2121,8 +2159,8 @@ inline std::string ExecuteVinActionJson(const std::string& action, const std::st
                 }
             }
         }
-        if (!ok) {
-            log.push_back("CAN 0x7E0 no VIN response; probing K-Line ECM (0x11 / 0x7A -> 10 C0, 1A 90 / 21 90)...");
+        if (!ok && !canEcmResponded) {
+            log.push_back("CAN 0x7E0 no response; probing K-Line ECM (0x11 / 0x7A -> 10 C0, 1A 90 / 21 90)...");
             std::vector<std::vector<unsigned char>> kReqs = {{0x10, 0xC0}, {0x1A, 0x90}, {0x21, 0x90}};
             std::vector<std::vector<unsigned char>> kResps;
             if (g_diag.RunKLineSession(0x11, kReqs, kResps, 450) || g_diag.RunKLineSession(0x7A, kReqs, kResps, 450)) {
@@ -2134,7 +2172,7 @@ inline std::string ExecuteVinActionJson(const std::string& action, const std::st
                 }
             }
         }
-        if (!ok) {
+        if (!ok && !f9qEmptyVinSlot) {
             log.push_back("Probing K-Line BCM (0x5A) & IMM (0x5D)...");
             std::vector<std::vector<unsigned char>> bcmReqs = {{0x21, 0x80}, {0x1A, 0x90}};
             std::vector<std::vector<unsigned char>> bcmResps;
@@ -2158,7 +2196,13 @@ inline std::string ExecuteVinActionJson(const std::string& action, const std::st
         if (ok && !vin.empty()) {
             g_cachedVin = vin;
         }
-        message = ok ? ("VIN Read Successful: " + vin) : "Could not read VIN (1A 90 / 22 F1 90 / 09 02). Ensure Ignition is ON.";
+        if (ok) {
+            message = "VIN Read Successful: " + vin;
+        } else if (f9qEmptyVinSlot) {
+            message = "Grand Vitara 1.9 DDiS (F9Q Base 93): ECM VIN alanı (21 81) fabrikasyon boş (00..00); bu modelde şasi numarası ECU belleğinde kayıtlı değildir.";
+        } else {
+            message = "Could not read VIN (1A 90 / 21 81 / 22 F1 90 / 09 02). Ensure Ignition is ON.";
+        }
     } else if (action == "write") {
         std::string effProf = ResolveEffectiveProfile();
         std::string clean;

@@ -2568,9 +2568,12 @@ void HandleClient(SOCKET clientSock) {
         std::vector<std::vector<unsigned char>> reqs = {
             {0x10, 0xC0},
             {0x19, 0x04, dtcBytes[0], dtcBytes[1], dtcBytes[2], 0xFF},
-            {0x12, 0x00, 0x04, 0x00, 0x00},
+            {0x12, 0x00, 0x04, dtcBytes[0], dtcBytes[1]},
+            {0x12, 0x01, 0x04, dtcBytes[0], dtcBytes[1]},
             {0x12, 0x00, 0x00},
-            {0x21, 0x87}
+            {0x21, 0x87},
+            {0x21, 0x82},
+            {0x21, 0xC1}
         };
         std::vector<std::vector<unsigned char>> resps;
         SendBatch(g_diag, 0x7E0, 0x7E8, reqs, resps, 350);
@@ -2582,7 +2585,7 @@ void HandleClient(SOCKET clientSock) {
                 break;
             }
         }
-        if (!found) {
+        if (!found && g_activeProfileId != "gv_jb419d" && g_activeProfileId != "suzuki_can") {
             std::vector<std::vector<unsigned char>> kResps;
             if (g_diag.RunKLineSession(0x11, {{0x12, 0x00, 0x00}, {0x21, 0x87}}, kResps, 350)) {
                 for (const auto& kr : kResps) {
