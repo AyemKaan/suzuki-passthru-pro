@@ -23,7 +23,12 @@
 > [!WARNING]
 > **BETA RELEASE — HARDWARE VERIFICATION NOTICE**
 > This software is currently in active **BETA** stage. Not 100% of Suzuki models or write routines have been physically field-tested yet.
-> - **Physically Hardware-Verified Operations (Suzuki Grand Vitara 1.9 DDiS JB419D / F9Q):** CAN (`0x7E0`) session/DTC/live telemetry, K-Line Pin 7 BCM (`0x5A`) `21 08` EEPROM read, and K-Line ABS/ESP (`0x29`) `21 00` telemetry & DTC read.
+> - **Physically Hardware-Verified Operations (Suzuki Grand Vitara 1.9 DDiS JB419D / F9Q):**
+>   - **7 Live ECUs Scanned & Cleared (`0x54` Verified):** CAN ECM (`0x7E0`, `33920-67J20`), K-Line ABS/ESP (`0x29`, `56100-65J6*`), 4WD (`0x21`, `38885-65J0*`), BCM (`0x5A`, `36770-65J5*`), SRS Airbag (`0x59`, `38910-65J3*`), Keyless/Immobilizer (`0x5D`, `33970-67J0*`), and HVAC Climate Control (`0x99`).
+>   - **50/54 Official Database Live Parameters (`/api/db/live`):** Real-time decoding across all 4 pages of Base 93 (`21 80..C1`).
+>   - **Injector IMA Coding Read (`21 AD`):** Verified live cylinder 1–4 6-character IMA codes (`7TID66`, `7O87AB`, `AR1O76`, `7Y825B`).
+>   - **BCM Hidden Feature State Read (`21 08`):** 37-byte EEPROM read on K-Line `0x5A` decoding all 11 supported personalization states.
+>   - **ECM Local ID Discovery (`21 00..FE`) & Freeze-Frame (`21 82`):** Discovered all 28 active `21 xx` blocks and decoded KWP snapshot data.
 > - **Unverified / Factory Catalog Mapped Routines:** Calibration resets, Injector IMA writing, VIN registration, BCM hidden-feature writes, Immobilizer key programming (`0x5D` / `0x5B` / UDS), and other Suzuki chassis/models are mapped from factory OEM diagnostic definitions with session/variant safety guards and are **awaiting physical vehicle validation**. Use write/key/BCM routines cautiously on a real vehicle.
 
 ---
@@ -117,16 +122,19 @@ All 5 core functional modules have been captured directly from the live applicat
 
 ---
 
-## ✅ Field-Tested & Hardware-Verified Features (Live Vehicle Read / Scan)
+## ✅ Field-Tested & Hardware-Verified Features (Live Vehicle Read / Scan / Clear)
 
-The following read, scan, and telemetry functions have been **physically field-tested on a live vehicle** (Suzuki Grand Vitara 1.9 DDiS JB419D / Bosch EDC16C39 / F9Q) connected via MongoosePro JLR PassThru. Write routines (BCM write, key programming, IMA write, DPF/EGR resets) are **not yet field-verified**:
+The following diagnostic scan, DTC clear, live database telemetry, and coding-read functions have been **physically field-tested on a live vehicle** (Suzuki Grand Vitara 1.9 DDiS JB419D / Bosch EDC16C39 / F9Q, Base 93, Variant `16330983`, Part `33920-67J20`) connected via MongoosePro JLR PassThru:
 
-| Module / System | Physical Layer | Protocol / Address | Validated Operations | Current Status |
+| Module / System | Physical Layer | Protocol / Address | Validated Operations on Live Vehicle | Current Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Engine ECM (Bosch EDC16C39)** | High-Speed CAN | `ISO 15765-4` (ID `0x7E0` / `0x7E8`) | • Diagnostic Session Start (`10 C0` -> `50 C0`)<br>• Full DTC Inspection & Clear (`18 00 FF 00` / `14 FF 00`)<br>• Renault F9Q Multi-PID Live Stream (`21 A4..C0`: 800 RPM, 298 bar Rail Pressure, 84°C Coolant, Boost, DPF EGT & Differential Pressure)<br>• Persistent CAN/K-Line channel scopes implemented for multi-step procedures | **READ / SCAN VERIFIED** *(Writes unverified on car)* |
-| **Body Control Module (BCM)** | K-Line Pin 7 | Suzuki 4-Byte `ISO 14230` (Target `0x5A`) | • 4-Byte Header Session (`0x80 0x5A 0xF1 0x02 0x10 0xC0`)<br>• 37-Byte Factory EEPROM Read (`21 08`)<br>• Real-time decoding of Alarm, Answer-Back, Auto-lock 15 km/h, Unlock modes, Dome Dimmer, Buzzer | **READ VERIFIED** *(Coding writes unverified)* |
-| **Brake & Stability (ABS/ESP)** | K-Line Pin 7 | `ISO 14230` (Target `0x29`) | • 34-Byte Telemetry Read (`21 00`: Steering Angle `7.0°`, Lateral G, Yaw Rate, Battery)<br>• ABS DTC Fault Capture (`C1021`)<br>• SAS calibration precondition (`7F A5 23`) & post-calibration verification (`21 00` / DTC re-read) | **READ VERIFIED** *(SAS calibration completion untested on car)* |
-| **Immobilizer & Keyless (KLS)** | K-Line Pin 7 & CAN | `ISO 14230` (`0x5D`) / CAN (`0x275`) | • Model architecture routing (`SuzukiImmoSystem`), strict `61 A1` / `61 B0` response validators, & multi-stage PIN-then-action session logic<br>• Fail-closed lock when `auto` vehicle identity is unverified | **CODE IMPLEMENTED** *(Pending live `0x5D` vehicle test)* |
+| **Engine ECM (Bosch EDC16C39)** | High-Speed CAN | `ISO 15765-4` (`0x7E0` / `0x7E8`) | • Auto-Detection (`21 80` -> `33920-67J20`, HW `8200518648`, SW `00C1`)<br>• Full DTC Read (`18 00 FF 00`) & Clear (`14 FF 00` -> `54 FF 00` + `7F 14 78` P2* handling)<br>• **50/54 Official DB Live Parameters** across 4 pages (`21 A0..FE`)<br>• **Injector IMA Read (`21 AD`):** Verified Cyl 1–4 (`7TID66`, `7O87AB`, `AR1O76`, `7Y825B`)<br>• **28 Local ID Discovery** (`21 71..FE`) & **Freeze-Frame Snapshot** (`21 82`) | **READ / SCAN / DTC CLEAR VERIFIED** *(IMA/Calib writes unverified)* |
+| **Body Control Module (BCM)** | K-Line Pin 7 | `ISO 14230` Fast Init (`0x5A`) | • Part Number Read (`21 80` -> `36770-65J5*`)<br>• Body DTC Inspection (`18 00 80 00`) & Clear (`14 80 00` -> `54`)<br>• **37-Byte EEPROM Read (`21 08`):** Decoded all 11 supported hidden features (Alarm, Auto-Lock, Auto-Unlock, Follow-Me-Home, Unlock Mode, Dimmer, Buzzer) | **READ / SCAN / DTC CLEAR VERIFIED** *(Coding writes unverified)* |
+| **Brake & Stability (ABS/ESP)** | K-Line Pin 7 | `ISO 14230` Fast Init (`0x29`) | • Part Number Read (`21 80` -> `56100-65J6*`)<br>• 34-Byte Live Telemetry (`21 00`: Steering Angle `-201.0°`, Lateral G, Yaw Rate, Battery)<br>• Chassis DTC Inspection (`18 00 40 00`: `C1021`, `C1057`) & Clear (`14 40 00` -> `54`) | **READ / SCAN / DTC CLEAR VERIFIED** *(SAS calibration untested)* |
+| **4WD / Transfer Case** | K-Line Pin 7 | `ISO 14230` Fast Init (`0x21`) | • Part Number Read (`21 80` -> `38885-65J0*`)<br>• Chassis DTC Inspection (`18 00 40 00` -> `0 DTC`) & Clear (`14 40 00` -> `54`) | **READ / SCAN / DTC CLEAR VERIFIED** |
+| **SRS Airbag** | K-Line Pin 7 | `ISO 14230` Fast Init (`0x59`) | • Part Number Read (`21 80` -> `38910-65J3*`)<br>• Body DTC Inspection (`18 00 80 00` -> `B1013` historical) & Clear (`14 80 00` -> `54`, cleared to `0 DTC`) | **READ / SCAN / DTC CLEAR VERIFIED** |
+| **Keyless & Immobilizer (KLS/IMM)** | K-Line Pin 7 & CAN | `ISO 14230` (`0x5D`) / CAN (`0x7E0`) | • Part Number Read (`21 80` -> `33970-67J0*`)<br>• Body DTC Inspection (`18 00 80 00` -> `B1705`) & Clear (`14 80 00` -> `54`)<br>• Registered Key Count Read (`21 A1` -> `1 Key`) | **READ / SCAN / DTC CLEAR VERIFIED** *(Key programming untested)* |
+| **HVAC / Climate Control** | K-Line Pin 7 | `ISO 14230` Fast Init (`0x99`) | • ECU Identity Read (`21 80` -> `61 80 01 95...`)<br>• Body DTC Inspection (`18 00 80 00` -> `B1521`) & Clear (`14 80 00`) | **READ / SCAN VERIFIED** |
 | **Vehicle Architecture Filter** | Frontend & C++ | Multi-Tab Safety Core | • Fails closed on unidentified `auto` / unknown profiles for all writes, BCM coding, SAS calibration, and DTC clear<br>• Disables unsupported features per model profile | **ACTIVE SAFETY GUARD** |
 | **Telemetry CSV Recorder** | Native Web App | Client-side File Stream | • Real-time road-test telemetry logging to timestamped CSV files | **VERIFIED** |
 
