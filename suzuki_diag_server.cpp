@@ -225,6 +225,8 @@ public:
     std::string activeDllPath = "C:\\Program Files (x86)\\Drew Technologies, Inc\\J2534\\MongoosePro JLR\\monpj432.dll";
     std::string activeDeviceName = "MongoosePro JLR";
     std::string fwVer, dllVer, apiVer;
+    double cachedEcuVbatt = std::numeric_limits<double>::quiet_NaN();
+    unsigned long lastRawVbattMv = 0;
 
     void UnloadLocked() {
         if (isConnected && ptClose && devId != 0) {
@@ -314,6 +316,14 @@ public:
         if (!ConnectDeviceLocked()) return std::numeric_limits<double>::quiet_NaN();
         unsigned long vbattMv = 0;
         if (ptIoctl(devId, READ_VBATT, NULL, &vbattMv) == 0) {
+            lastRawVbattMv = vbattMv;
+            if (!std::isnan(cachedEcuVbatt) && cachedEcuVbatt >= 8.0 && cachedEcuVbatt <= 18.0) {
+                return cachedEcuVbatt;
+            }
+            if (vbattMv > 20000) {
+                // MongoosePro JLR clone hardware uses a 3x internal ADC scale factor on READ_VBATT (e.g. 36300 -> 12.10V)
+                return (vbattMv >= 30000) ? (vbattMv / 3000.0) : (vbattMv / 2250.0);
+            }
             return vbattMv / 1000.0;
         }
         char firmware[256] = {}, dll[256] = {}, api[256] = {};
@@ -322,6 +332,7 @@ public:
             devId = 0;
             isConnected = false;
             fwVer.clear(); dllVer.clear(); apiVer.clear();
+            cachedEcuVbatt = std::numeric_limits<double>::quiet_NaN();
         }
         return std::numeric_limits<double>::quiet_NaN();
     }
@@ -331,6 +342,7 @@ public:
         response.clear();
         valid = false;
         if (!ConnectDeviceLocked()) return 8;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         unsigned long channel = 0;
         long result = ptConnect(devId, ISO14230, 0, 10400, &channel);
         if (result != 0) return result;
@@ -340,6 +352,7 @@ public:
         unsigned long filter = 0;
         result = ptStartFilter(channel, PASS_FILTER, &mask, &pattern, NULL, &filter);
         if (result == 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
             tx.DataSize = 4;
             tx.Data[0] = 0x81; tx.Data[1] = target; tx.Data[2] = 0xF1; tx.Data[3] = 0x81;
             result = ptIoctl(channel, FAST_INIT, &tx, &rx);
@@ -349,12 +362,14 @@ public:
             }
             // Send StopCommunication (82) cleanly if Fast Init succeeded
             if (valid) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(45));
                 PASSTHRU_MSG stopTx = {};
                 stopTx.ProtocolID = ISO14230;
                 stopTx.DataSize = 4;
                 stopTx.Data[0] = 0x81; stopTx.Data[1] = target; stopTx.Data[2] = 0xF1; stopTx.Data[3] = 0x82;
                 unsigned long n = 1;
                 ptWrite(channel, &stopTx, &n, 150);
+                std::this_thread::sleep_for(std::chrono::milliseconds(60));
             }
             ptStopFilter(channel, filter);
         }
@@ -369,9 +384,7 @@ public:
         outFilterId = 0;
         if (!ConnectDeviceLocked()) return false;
 
-        // Guaranteed ISO 14230 Tidle / bus idle time before Fast Init
-        std::this_thread::sleep_for(std::chrono::milliseconds(350));
-
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         if (ptConnect(devId, ISO14230, 0, 10400, &outCh) != 0) return false;
 
         PASSTHRU_MSG mask = {}, pattern = {}, initTx = {}, initRx = {};
@@ -383,15 +396,24 @@ public:
             return false;
         }
 
+        // Guaranteed ISO 14230 Tidle (300ms) AFTER K-Line channel is connected and pulled high
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
         initTx.DataSize = 4;
         initTx.Data[0] = 0x81; initTx.Data[1] = target; initTx.Data[2] = 0xF1; initTx.Data[3] = 0x81;
         long ret = ptIoctl(outCh, FAST_INIT, &initTx, &initRx);
         if (ret != 0 || !ValidKLineStart(initRx, target)) {
-            ptStopFilter(outCh, outFilterId);
-            ptDisconnect(outCh);
-            outCh = 0;
-            outFilterId = 0;
-            return false;
+            // Retry once after Tidle recovery in case previous session/CAN switch was still settling
+            std::this_thread::sleep_for(std::chrono::milliseconds(350));
+            initRx = {};
+            ret = ptIoctl(outCh, FAST_INIT, &initTx, &initRx);
+            if (ret != 0 || !ValidKLineStart(initRx, target)) {
+                ptStopFilter(outCh, outFilterId);
+                ptDisconnect(outCh);
+                outCh = 0;
+                outFilterId = 0;
+                return false;
+            }
         }
 
         // Drain any leftover rx bytes after Fast Init
@@ -404,14 +426,20 @@ public:
 
     void CloseKLineChannelLocked(unsigned long ch, unsigned long filterId, unsigned char target) {
         if (ch != 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(45)); // P3_Min before StopCommunication
             PASSTHRU_MSG stopTx = {};
             stopTx.ProtocolID = ISO14230;
             stopTx.DataSize = 4;
             stopTx.Data[0] = 0x81; stopTx.Data[1] = target; stopTx.Data[2] = 0xF1; stopTx.Data[3] = 0x82;
             unsigned long n = 1;
             ptWrite(ch, &stopTx, &n, 150);
+            for (int d = 0; d < 4; d++) {
+                PASSTHRU_MSG drx = {}; unsigned long dn = 1;
+                if (ptRead(ch, &drx, &dn, 25) != 0 || dn == 0) break;
+            }
             if (filterId != 0) ptStopFilter(ch, filterId);
             ptDisconnect(ch);
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
     }
 
@@ -517,6 +545,7 @@ public:
             outCh = 0;
             return false;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
         return true;
     }
 
@@ -524,6 +553,7 @@ public:
         if (ch != 0) {
             if (filterId != 0) ptStopFilter(ch, filterId);
             ptDisconnect(ch);
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
     }
 
@@ -1156,8 +1186,8 @@ CompleteLiveData QueryCompleteLiveData() {
         }
     }
 
-    // 2. Query ABS/ESP: Try CAN (0x261/0x661) first if profile is not pure K-Line
-    if (g_activeProfileId != "suzuki_kline") {
+    // 2. Query ABS/ESP: Try CAN (0x261/0x661) first if profile is not pure K-Line or Grand Vitara JB419D (where ABS is K-Line 0x29)
+    if (g_activeProfileId != "suzuki_kline" && g_activeProfileId != "gv_jb419d") {
         std::vector<std::vector<unsigned char>> absCanReqs = {
             {0x10, 0xC0},
             {0x21, 0x00},
@@ -1188,10 +1218,13 @@ CompleteLiveData QueryCompleteLiveData() {
     // 3. If ABS/ESP did not respond on CAN and profile supports K-Line ABS (0x29), try K-Line 0x29
     if (!data.absOnline && g_activeProfileId != "suzuki_can") {
         std::vector<std::vector<unsigned char>> kResps;
-        if (g_diag.RunKLineSession(0x29, {{0x21, 0x00}}, kResps, 300) && !kResps.empty() && kResps[0].size() >= 2 + 22 && kResps[0][0] == 0x61 && kResps[0][1] == 0x00) {
+        if (g_diag.RunKLineSession(0x29, {{0x21, 0x00}}, kResps, 400) && !kResps.empty() && kResps[0].size() >= 2 + 22 && kResps[0][0] == 0x61 && kResps[0][1] == 0x00) {
             data.absOnline = true;
             data.absMode = "K-Line 0x29 (21 00)";
             const auto& r = kResps[0];
+            if (std::isnan(data.ecmVbatt) && r.size() >= 2 + 13) {
+                data.ecmVbatt = r[2 + 12] * 0.0784313725490196;
+            }
             if (std::isnan(data.speed)) {
                 double rf = r[2 + 7];
                 double lf = r[2 + 8];
@@ -1205,6 +1238,11 @@ CompleteLiveData QueryCompleteLiveData() {
                 data.sasStatus = data.sasValid ? "OK" : "UNSET_OR_UNCALIBRATED";
             }
         }
+    }
+
+    if (!std::isnan(data.ecmVbatt) && data.ecmVbatt >= 8.0 && data.ecmVbatt <= 18.0) {
+        g_diag.cachedEcuVbatt = data.ecmVbatt;
+        data.vbatt = data.ecmVbatt;
     }
 
     return data;
@@ -1359,106 +1397,103 @@ std::string ScanDTCsForModule(const ModuleDef& mod, std::vector<DTCEntry>& dtcLi
     std::vector<unsigned char> resp;
 
     // 1. Try CAN Bus (ISO 15765, 500 kbps) if module has a CAN address (primary or alternate)
-    bool sessionOk = false;
-    unsigned long activeTx = mod.txId;
-    unsigned long activeRx = mod.rxId;
-    if (mod.txId != 0) {
-        if (g_diag.SendAndReceive(activeTx, activeRx, {0x10, 0xC0}, resp, 450) && resp.size() >= 2 && resp[0] == 0x50) {
+    // On gv_jb419d (Grand Vitara 1.9 DDiS), non-ECM/IPC modules with a K-Line address reside on K-Line Pin 7.
+    auto tryCanDtcScan = [&](unsigned long tx, unsigned long rx) -> bool {
+        CanChannelScope scope(g_diag, tx, rx);
+        if (!scope.open) return false;
+        bool sessionOk = false;
+        if (scope.Transact({0x10, 0xC0}, resp, 350) && resp.size() >= 2 && resp[0] == 0x50) {
             sessionOk = true;
-        } else if (g_diag.SendAndReceive(activeTx, activeRx, {0x10, 0x81}, resp, 350) && resp.size() >= 2 && resp[0] == 0x50) {
-            sessionOk = true;
-        } else if (g_diag.SendAndReceive(activeTx, activeRx, {0x10, 0x03}, resp, 350) && resp.size() >= 2 && resp[0] == 0x50) {
-            sessionOk = true;
-        } else if (g_diag.SendAndReceive(activeTx, activeRx, {0x1A, 0x8E}, resp, 350) && resp.size() >= 2 && resp[0] == 0x5A) {
-            sessionOk = true;
-        } else if (g_diag.SendAndReceive(activeTx, activeRx, {0x18, 0x00, 0xFF, 0x00}, resp, 350) && resp.size() >= 2 && resp[0] == 0x58) {
-            sessionOk = true;
-        } else if (mod.altTxId != 0) {
-            if (g_diag.SendAndReceive(mod.altTxId, mod.altRxId, {0x10, 0xC0}, resp, 450) && resp.size() >= 2 && resp[0] == 0x50) {
+        } else {
+            bool gotAnyFrame = !resp.empty();
+            if (scope.Transact({0x1A, 0x8E}, resp, 220) && resp.size() >= 2 && resp[0] == 0x5A) {
                 sessionOk = true;
-                activeTx = mod.altTxId;
-                activeRx = mod.altRxId;
-            } else if (g_diag.SendAndReceive(mod.altTxId, mod.altRxId, {0x10, 0x81}, resp, 350) && resp.size() >= 2 && resp[0] == 0x50) {
-                sessionOk = true;
-                activeTx = mod.altTxId;
-                activeRx = mod.altRxId;
-            } else if (g_diag.SendAndReceive(mod.altTxId, mod.altRxId, {0x10, 0x03}, resp, 350) && resp.size() >= 2 && resp[0] == 0x50) {
-                sessionOk = true;
-                activeTx = mod.altTxId;
-                activeRx = mod.altRxId;
-            } else if (g_diag.SendAndReceive(mod.altTxId, mod.altRxId, {0x1A, 0x8E}, resp, 350) && resp.size() >= 2 && resp[0] == 0x5A) {
-                sessionOk = true;
-                activeTx = mod.altTxId;
-                activeRx = mod.altRxId;
-            } else if (g_diag.SendAndReceive(mod.altTxId, mod.altRxId, {0x18, 0x00, 0xFF, 0x00}, resp, 350) && resp.size() >= 2 && resp[0] == 0x58) {
-                sessionOk = true;
-                activeTx = mod.altTxId;
-                activeRx = mod.altRxId;
+            }
+            gotAnyFrame = gotAnyFrame || !resp.empty();
+            if (!sessionOk && gotAnyFrame) {
+                if (scope.Transact({0x10, 0x81}, resp, 220) && resp.size() >= 2 && resp[0] == 0x50) sessionOk = true;
+                else if (scope.Transact({0x10, 0x03}, resp, 220) && resp.size() >= 2 && resp[0] == 0x50) sessionOk = true;
+                else if (scope.Transact({0x18, 0x00, 0xFF, 0x00}, resp, 250) && resp.size() >= 2 && resp[0] == 0x58) sessionOk = true;
             }
         }
-    }
+        if (!sessionOk) return false;
 
-    if (sessionOk) {
         res.responsive = true;
         std::vector<unsigned char> idResp;
-        if (g_diag.SendAndReceive(activeTx, activeRx, {0x1A, 0x8E}, idResp, 200) && idResp.size() >= 12 && idResp[0] == 0x5A) {
+        if (scope.Transact({0x1A, 0x8E}, idResp, 200) && idResp.size() >= 12 && idResp[0] == 0x5A) {
             std::string cid(idResp.begin() + 2, idResp.begin() + 12);
             res.variant += " [ID: " + cid + "]";
-        } else if (g_diag.SendAndReceive(activeTx, activeRx, {0x22, 0xF1, 0x01}, idResp, 200) && idResp.size() >= 13 && idResp[0] == 0x62) {
+        } else if (scope.Transact({0x22, 0xF1, 0x01}, idResp, 200) && idResp.size() >= 13 && idResp[0] == 0x62) {
             std::string cid(idResp.begin() + 3, idResp.begin() + 13);
             res.variant += " [UDS ID: " + cid + "]";
         }
 
-        // Try diagnostic DTC read services in order:
+        // Try diagnostic DTC read services in order within the same open CAN session:
         // - Bosch F9Q ECM (Base 93, dtc_read_info_set=93 '29'): 17 29 or 19 02 29
         // - UDS modules (Suzuki/UDS): 19 02 FF or 19 02 0D
         // - Suzuki/CAN modules: 18 00 FF 00 or 17 00 FF 00 or 17 FF 00
-        if (g_diag.SendAndReceive(activeTx, activeRx, {0x17, 0x29}, resp, 350) && resp.size() >= 2 && resp[0] == 0x57) {
+        if (scope.Transact({0x17, 0x29}, resp, 350) && resp.size() >= 2 && resp[0] == 0x57) {
             ParseKwpDtcList(resp, mod.shortName, dtcList, res);
-            return res.status;
+            return true;
         }
-        if (g_diag.SendAndReceive(activeTx, activeRx, {0x19, 0x02, 0x29}, resp, 350) && resp.size() >= 3 && resp[0] == 0x59) {
+        if (scope.Transact({0x19, 0x02, 0x29}, resp, 350) && resp.size() >= 3 && resp[0] == 0x59) {
             ParseUdsDtcList19(resp, mod.shortName, dtcList, res);
-            return res.status;
+            return true;
         }
-        if (g_diag.SendAndReceive(activeTx, activeRx, {0x19, 0x02, 0xFF}, resp, 350) && resp.size() >= 3 && resp[0] == 0x59) {
+        if (scope.Transact({0x19, 0x02, 0xFF}, resp, 350) && resp.size() >= 3 && resp[0] == 0x59) {
             ParseUdsDtcList19(resp, mod.shortName, dtcList, res);
-            return res.status;
+            return true;
         }
-        if (g_diag.SendAndReceive(activeTx, activeRx, {0x19, 0x02, 0x0D}, resp, 350) && resp.size() >= 3 && resp[0] == 0x59) {
+        if (scope.Transact({0x19, 0x02, 0x0D}, resp, 350) && resp.size() >= 3 && resp[0] == 0x59) {
             ParseUdsDtcList19(resp, mod.shortName, dtcList, res);
-            return res.status;
+            return true;
         }
-        if (g_diag.SendAndReceive(activeTx, activeRx, {0x18, 0x00, 0xFF, 0x00}, resp, 350) && resp.size() >= 2 && resp[0] == 0x58) {
+        if (scope.Transact({0x18, 0x00, 0xFF, 0x00}, resp, 350) && resp.size() >= 2 && resp[0] == 0x58) {
             ParseKwpDtcList(resp, mod.shortName, dtcList, res);
-            return res.status;
+            return true;
         }
-        if (g_diag.SendAndReceive(activeTx, activeRx, {0x17, 0x00, 0xFF, 0x00}, resp, 350) && resp.size() >= 2 && resp[0] == 0x57) {
+        if (scope.Transact({0x17, 0x00, 0xFF, 0x00}, resp, 350) && resp.size() >= 2 && resp[0] == 0x57) {
             ParseKwpDtcList(resp, mod.shortName, dtcList, res);
-            return res.status;
+            return true;
         }
-        if (g_diag.SendAndReceive(activeTx, activeRx, {0x17, 0xFF, 0x00}, resp, 350) && resp.size() >= 2 && resp[0] == 0x57) {
+        if (scope.Transact({0x17, 0xFF, 0x00}, resp, 350) && resp.size() >= 2 && resp[0] == 0x57) {
             ParseKwpDtcList(resp, mod.shortName, dtcList, res);
-            return res.status;
+            return true;
         }
 
         res.dtcCount = -1;
         res.status = "Modul CAN uzerinden yanit verdi, ancak DTC okuma servisi reddedildi (" + HexBytes(resp) + ")";
-        return res.status;
+        return true;
+    };
+
+    bool skipCanForJb419dKlineMod = (g_activeProfileId == "gv_jb419d" && mod.shortName != "ECM" && mod.klineAddr != 0);
+    if (mod.txId != 0 && !skipCanForJb419dKlineMod) {
+        if (tryCanDtcScan(mod.txId, mod.rxId)) {
+            return res.status;
+        }
+        if (mod.altTxId != 0 && tryCanDtcScan(mod.altTxId, mod.altRxId)) {
+            return res.status;
+        }
     }
 
     // 2. If CAN did not respond and module has a verified Suzuki K-Line address (Pin 7, 10400 baud), try primary and alternate K-Line Fast Init!
     unsigned char kTargets[2] = {mod.klineAddr, mod.altKlineAddr};
     for (unsigned char kAddr : kTargets) {
         if (kAddr == 0) continue;
+        unsigned char dtcGroupHi = 0x40; // Default Chassis group (0x4000: ABS/ESP 0x29, 4WD 0x21, EPS 0x31)
+        if (kAddr == 0x5A || kAddr == 0x59 || kAddr == 0x5D || kAddr == 0x5B || kAddr == 0x5C || kAddr == 0x99 || kAddr == 0x98) {
+            dtcGroupHi = 0x80; // Official DB dtc_read_info_set 94: 008000 00FF00 (BCM, SRS, IMM, OCM, TPMS, AC)
+        } else if (kAddr == 0x11 || kAddr == 0x10 || kAddr == 0x01 || kAddr == 0x19 || kAddr == 0x13) {
+            dtcGroupHi = 0x00; // Official DB dtc_read_info_set 98: 000000 00FF00 (ECM, PCM, TCM)
+        }
         std::vector<std::vector<unsigned char>> kReqs = {
-            {0x1A, 0x91},             // [0] Suzuki Part Number (ASCII)
-            {0x1A, 0x9A},             // [1] Base Part Number
-            {0x1A, 0x8B},             // [2] Hydraulic Unit / Extra ID
-            {0x1A, 0x9E},             // [3] Calibration ID
-            {0x18, 0x00, 0x40, 0x00}, // [4] Suzuki/Kline Read DTCs
-            {0x18, 0x00, 0xFF, 0x00}, // [5] Suzuki/Kline Read DTCs
-            {0x21, 0x08}              // [6] Local Data / Config
+            {0x1A, 0x91},                     // [0] Suzuki Part Number (ASCII)
+            {0x1A, 0x9A},                     // [1] Base Part Number
+            {0x1A, 0x8B},                     // [2] Hydraulic Unit / Extra ID
+            {0x1A, 0x9E},                     // [3] Calibration ID
+            {0x18, 0x00, dtcGroupHi, 0x00},   // [4] Suzuki/Kline Read DTCs (DB group-specific)
+            {0x18, 0x00, 0xFF, 0x00},         // [5] Suzuki/Kline Read DTCs (All groups fallback)
+            {0x21, 0x08}                      // [6] Local Data / Config
         };
         std::vector<std::vector<unsigned char>> kResps;
         if (g_diag.RunKLineSession(kAddr, kReqs, kResps, 350)) {
@@ -2327,9 +2362,9 @@ ProcedureResult AutoDetectSuzukiVehicle() {
     g_detectedVehicleDesc = "ECU/model not identified";
     struct Probe { int base; unsigned char target; std::vector<std::vector<unsigned char>> requests; };
     const std::vector<Probe> probes = {
-        {41, 0, {{0x1A,0x8E},{0x1A,0x8A}}},
-        {194, 0, {{0x22,0xF1,0x01},{0x22,0xF1,0x88}}},
         {93, 0, {{0x10,0xC0},{0x21,0x80}}},
+        {41, 0, {{0x10,0xC0},{0x1A,0x8E},{0x1A,0x8A}}},
+        {194, 0, {{0x22,0xF1,0x01},{0x22,0xF1,0x88}}},
         {64, 0x11, {{0x1A,0x8E},{0x1A,0x8A}}},
         {101, 0x7A, {{0x10,0xC0},{0x21,0x80}}},
         {98, 0x10, {{0x1A,0x94}}}
@@ -2707,14 +2742,20 @@ void HandleClient(SOCKET clientSock) {
         else if (path == "/api/kline/eps") { target = 0x31; modCode = "EPS"; }
 
         std::string targetHex = HexAddr(target, 2);
+        unsigned char kDtcGroupHi = 0x40;
+        if (target == 0x5A || target == 0x59 || target == 0x5D || target == 0x5B || target == 0x5C || target == 0x99) {
+            kDtcGroupHi = 0x80;
+        } else if (target == 0x11 || target == 0x7A || target == 0x13) {
+            kDtcGroupHi = 0x00;
+        }
         std::vector<std::vector<unsigned char>> reqs = {
             {0x21, 0x80},
+            {0x1A, 0x91},
+            {0x21, 0x08},
+            {0x18, 0x00, kDtcGroupHi, 0x00},
             {0x18, 0x00, 0xFF, 0x00},
             {0x21, 0x00}
         };
-        if (target == 0x29) {
-            reqs.push_back({0x18, 0x00, 0x40, 0x00});
-        }
         if (target == 0x5D || target == 0x5B) {
             reqs.push_back({0x21, 0xA1});
             reqs.push_back({0x21, 0xA0});
@@ -2736,22 +2777,28 @@ void HandleClient(SOCKET clientSock) {
             driverCode = g_diag.ProbeKLine(target, initRaw, startAccepted);
         }
 
-        std::string ecuIdRaw = (resps.size() > 0 && resps[0].size() >= 2 && resps[0][0] == 0x61) ? HexBytes(resps[0]) : "";
+        std::string ecuIdRaw;
+        for (size_t ri = 0; ri < 3 && ri < resps.size(); ++ri) {
+            if (resps[ri].size() >= 2 && (resps[ri][0] == 0x61 || resps[ri][0] == 0x5A)) {
+                ecuIdRaw = HexBytes(resps[ri]);
+                break;
+            }
+        }
         std::vector<DTCEntry> dtcs;
         ModuleScanResult dummyRes;
         dummyRes.dtcCount = -1;
-        if (resps.size() > 1 && !resps[1].empty() && (resps[1][0] == 0x58 || resps[1][0] == 0x57)) {
-            ParseKwpDtcList(resps[1], modCode, dtcs, dummyRes);
-        } else if (resps.size() > 3 && !resps[3].empty() && (resps[3][0] == 0x58 || resps[3][0] == 0x57)) {
+        if (resps.size() > 3 && !resps[3].empty() && (resps[3][0] == 0x58 || resps[3][0] == 0x57)) {
             ParseKwpDtcList(resps[3], modCode, dtcs, dummyRes);
+        } else if (resps.size() > 4 && !resps[4].empty() && (resps[4][0] == 0x58 || resps[4][0] == 0x57)) {
+            ParseKwpDtcList(resps[4], modCode, dtcs, dummyRes);
         } else if (sessionOk) {
-            std::string rej = (resps.size() > 1 && !resps[1].empty()) ? HexBytes(resps[1]) : "yanit yok";
+            std::string rej = (resps.size() > 3 && !resps[3].empty()) ? HexBytes(resps[3]) : "yanit yok";
             dummyRes.status = "K-Line yanit verdi ancak DTC okuma servisi reddedildi (" + rej + ")";
         }
 
         double sasDeg = std::numeric_limits<double>::quiet_NaN();
-        if (target == 0x29 && resps.size() > 2 && resps[2].size() >= 2 + 22 && resps[2][0] == 0x61 && resps[2][1] == 0x00) {
-            sasDeg = ReadSigned16BE(resps[2], 20) * 1.0;
+        if (target == 0x29 && resps.size() > 5 && resps[5].size() >= 2 + 22 && resps[5][0] == 0x61 && resps[5][1] == 0x00) {
+            sasDeg = ReadSigned16BE(resps[5], 20) * 1.0;
         }
 
         int regKeyCount = -1;
