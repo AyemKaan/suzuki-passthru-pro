@@ -1272,8 +1272,9 @@ inline bool IsServiceSupportedForProfile(const std::string& svcKey, const std::s
                 svcKey != "f9q_starter_test" && svcKey != "oil");
     }
     if (p == "UNIDENTIFIED") {
-        // Fail-closed: block calibrations and DTC clearing until vehicle ECU identity is confirmed or manually selected
-        return false;
+        // Fail-closed for calibrations/writes until vehicle ECU identity is confirmed or manually selected.
+        // Allow standard DTC clear (0x14 -> 0x54) in auto mode so scanned faults can be cleared directly.
+        return (svcKey == "clear");
     }
     return false;
 }

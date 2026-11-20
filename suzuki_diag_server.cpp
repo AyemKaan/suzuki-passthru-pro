@@ -2237,12 +2237,17 @@ ProcedureResult ExecuteClearAllDTCs() {
     std::vector<unsigned char> resp;
     int clearedCount = 0;
 
-    // 1. Clear ECM (0x7E0): Try 14 FF 00 (KWP2000/Bosch F9Q) then 14 FF FF FF (UDS)
+    // 1. Clear ECM (0x7E0): Support KWP2000 (10 C0), UDS (10 03 / 10 81), and OBD-II Mode 04 fallback
     res.log.push_back("ECM (0x7E0) DTC hafizasi siliniyor...");
     bool ecmCanResponded = false;
     {
         CanChannelScope ecmScope(g_diag, 0x7E0, 0x7E8);
-        if (ecmScope.open && ecmScope.Transact({0x10, 0xC0}, resp, 350) && !resp.empty() && resp[0] == 0x50) {
+        bool ecmSessOk = ecmScope.open && (
+            (ecmScope.Transact({0x10, 0xC0}, resp, 350) && !resp.empty() && resp[0] == 0x50) ||
+            (ecmScope.Transact({0x10, 0x03}, resp, 350) && !resp.empty() && resp[0] == 0x50) ||
+            (ecmScope.Transact({0x10, 0x81}, resp, 350) && !resp.empty() && resp[0] == 0x50)
+        );
+        if (ecmSessOk) {
             ecmCanResponded = true;
             bool ecmCleared = false;
             std::vector<unsigned char> clearResp;
@@ -2250,25 +2255,34 @@ ProcedureResult ExecuteClearAllDTCs() {
                 ecmCleared = true;
             } else if (ecmScope.Transact({0x14, 0xFF, 0xFF, 0xFF}, clearResp, 900) && !clearResp.empty() && clearResp[0] == 0x54) {
                 ecmCleared = true;
+            } else if (ecmScope.Transact({0x04}, clearResp, 900) && !clearResp.empty() && clearResp[0] == 0x44) {
+                ecmCleared = true;
             }
             ecmScope.Transact({0x10, 0x81}, resp, 300);
             if (ecmCleared) {
                 clearedCount++;
-                res.log.push_back("ECM (0x7E0): Ariza hafizasi basariyla temizlendi (0x54 onaylandi).");
+                res.log.push_back("ECM (0x7E0): Ariza hafizasi basariyla temizlendi (" + HexBytes(clearResp) + ").");
             } else {
                 res.log.push_back("ECM (0x7E0): Oturum acildi ancak silme komutu onaylanmadi (" + HexBytes(clearResp) + ").");
+            }
+        } else if (ecmScope.open) {
+            std::vector<unsigned char> obdResp;
+            if (ecmScope.Transact({0x04}, obdResp, 900) && !obdResp.empty() && obdResp[0] == 0x44) {
+                ecmCanResponded = true;
+                clearedCount++;
+                res.log.push_back("ECM (0x7E0): OBD-II Mode 04 ile ariza hafizasi temizlendi (44).");
             }
         }
     }
     if (!ecmCanResponded) {
         if (g_activeProfileId != "gv_jb419d" && g_activeProfileId != "suzuki_can") {
             std::vector<std::vector<unsigned char>> kResps;
-            if (g_diag.RunKLineSession(0x11, {{0x14, 0x00, 0x00}, {0x14, 0xFF, 0x00}}, kResps, 500) &&
+            if (g_diag.RunKLineSession(0x11, {{0x14, 0x00, 0x00}, {0x14, 0xFF, 0x00}, {0x04}}, kResps, 500) &&
                 !kResps.empty()) {
                 for (const auto& kr : kResps) {
-                    if (!kr.empty() && kr[0] == 0x54) {
+                    if (!kr.empty() && (kr[0] == 0x54 || kr[0] == 0x44)) {
                         clearedCount++;
-                        res.log.push_back("ECM (K-Line 0x11): Ariza hafizasi basariyla temizlendi (0x54 onaylandi).");
+                        res.log.push_back("ECM (K-Line 0x11): Ariza hafizasi basariyla temizlendi (" + HexBytes(kr) + ").");
                         break;
                     }
                 }
@@ -2286,42 +2300,58 @@ ProcedureResult ExecuteClearAllDTCs() {
         if (mod.shortName == "ECM") continue;
         bool modCleared = false;
         bool skipCanForJb419dKlineMod = (g_activeProfileId == "gv_jb419d" && mod.klineAddr != 0);
-        if (mod.txId != 0 && !skipCanForJb419dKlineMod) {
-            std::string addrStr = HexAddr(mod.txId, 3);
-            CanChannelScope modScope(g_diag, mod.txId, mod.rxId);
+        auto tryCanModClear = [&](unsigned long tx, unsigned long rx) -> bool {
+            if (tx == 0) return false;
+            std::string addrStr = HexAddr(tx, 3);
+            CanChannelScope modScope(g_diag, tx, rx);
             if (modScope.open &&
                 ((modScope.Transact({0x10, 0xC0}, resp, 220) && !resp.empty() && resp[0] == 0x50) ||
+                 (modScope.Transact({0x10, 0x03}, resp, 220) && !resp.empty() && resp[0] == 0x50) ||
                  (modScope.Transact({0x10, 0x81}, resp, 220) && !resp.empty() && resp[0] == 0x50))) {
                 std::vector<unsigned char> clearResp;
-                if (modScope.Transact({0x14, 0xFF, 0x00}, clearResp, 600) && !clearResp.empty() && clearResp[0] == 0x54) {
+                if ((modScope.Transact({0x14, 0xFF, 0x00}, clearResp, 600) && !clearResp.empty() && clearResp[0] == 0x54) ||
+                    (modScope.Transact({0x14, 0xFF, 0xFF, 0xFF}, clearResp, 600) && !clearResp.empty() && clearResp[0] == 0x54)) {
                     clearedCount++;
                     modCleared = true;
-                    res.log.push_back(mod.shortName + " (" + addrStr + "): Ariza hafizasi temizlendi (0x54 onaylandi).");
+                    res.log.push_back(mod.shortName + " (" + addrStr + "): Ariza hafizasi temizlendi (" + HexBytes(clearResp) + ").");
                 } else {
                     res.log.push_back(mod.shortName + " (" + addrStr + "): Silme komutu reddedildi (" + HexBytes(clearResp) + ").");
                 }
                 modScope.Transact({0x10, 0x81}, resp, 180);
+                return modCleared;
+            }
+            return false;
+        };
+        if (!skipCanForJb419dKlineMod) {
+            if (!tryCanModClear(mod.txId, mod.rxId) && mod.altTxId != 0) {
+                tryCanModClear(mod.altTxId, mod.altRxId);
             }
         }
-        if (!modCleared && mod.klineAddr != 0) {
-            unsigned char kGrp = 0x40;
-            if (mod.klineAddr == 0x5A || mod.klineAddr == 0x59 || mod.klineAddr == 0x5D || mod.klineAddr == 0x5B || mod.klineAddr == 0x5C || mod.klineAddr == 0x99) {
-                kGrp = 0x80;
-            } else if (mod.klineAddr == 0x11 || mod.klineAddr == 0x10 || mod.klineAddr == 0x13) {
-                kGrp = 0x00;
-            }
-            std::vector<std::vector<unsigned char>> kClearReqs = {
-                {0x14, kGrp, 0x00},
-                {0x14, 0xFF, 0x00}
-            };
-            std::vector<std::vector<unsigned char>> kResps;
-            if (g_diag.RunKLineSession(mod.klineAddr, kClearReqs, kResps, 600)) {
-                for (const auto& kr : kResps) {
-                    if (!kr.empty() && kr[0] == 0x54) {
-                        clearedCount++;
-                        res.log.push_back(mod.shortName + " (K-Line " + HexAddr(mod.klineAddr, 2) + "): Ariza hafizasi temizlendi (0x54 onaylandi).");
-                        break;
+        if (!modCleared) {
+            unsigned char kTargets[2] = {mod.klineAddr, mod.altKlineAddr};
+            for (unsigned char kAddr : kTargets) {
+                if (kAddr == 0) continue;
+                unsigned char kGrp = 0x40;
+                if (kAddr == 0x5A || kAddr == 0x59 || kAddr == 0x5D || kAddr == 0x5B || kAddr == 0x5C || kAddr == 0x99) {
+                    kGrp = 0x80;
+                } else if (kAddr == 0x11 || kAddr == 0x10 || kAddr == 0x13) {
+                    kGrp = 0x00;
+                }
+                std::vector<std::vector<unsigned char>> kClearReqs = {
+                    {0x14, kGrp, 0x00},
+                    {0x14, 0xFF, 0x00}
+                };
+                std::vector<std::vector<unsigned char>> kResps;
+                if (g_diag.RunKLineSession(kAddr, kClearReqs, kResps, 600)) {
+                    for (const auto& kr : kResps) {
+                        if (!kr.empty() && kr[0] == 0x54) {
+                            clearedCount++;
+                            modCleared = true;
+                            res.log.push_back(mod.shortName + " (K-Line " + HexAddr(kAddr, 2) + "): Ariza hafizasi temizlendi (0x54 onaylandi).");
+                            break;
+                        }
                     }
+                    if (modCleared) break;
                 }
             }
         }
@@ -2951,12 +2981,15 @@ void HandleClient(SOCKET clientSock) {
     else if (method == "POST" && (path.compare(0, 15, "/api/calibrate/") == 0 || path == "/api/dtc/clear")) {
         std::string sub = (path == "/api/dtc/clear") ? "clear" : path.substr(15);
         ProcedureResult pr;
+        if (sub == "clear" && g_activeProfileId == "auto") {
+            AutoDetectSuzukiVehicle();
+        }
         if (!IsServiceSupportedForProfile(sub, g_activeProfileId)) {
             bool isUnidentified = (ResolveEffectiveProfileFor(g_activeProfileId) == "UNIDENTIFIED");
             pr.step = isUnidentified ? "VEHICLE_UNIDENTIFIED" : "SERVICE_NOT_SUPPORTED";
             pr.success = false;
             pr.message = isUnidentified
-                ? ("Arac/ECU henuz tanimlanmadi ('auto' modu). Yazma/kalibrasyon/DTC silme (" + sub + ") guvenlik geregi KAPALI. Lutfen once 'Arac Tara' ile kimlik dogrulayin veya arac modelini secin.")
+                ? ("Arac/ECU henuz tanimlanmadi ('auto' modu). Yazma/kalibrasyon (" + sub + ") guvenlik geregi KAPALI. Lutfen once 'Arac Tara' ile kimlik dogrulayin veya arac modelini secin.")
                 : ("Bu servis / kalibrasyon fonksiyonu (" + sub + ") secili arac modelinde (" + g_activeProfileId + ") desteklenmemektedir (KAPALI). Guvenlik icin komut gonderilmedi.");
             pr.log.push_back("Security Guard: Service rejected (" + ResolveEffectiveProfileFor(g_activeProfileId) + " / raw: " + g_activeProfileId + ").");
         } else {
@@ -2994,6 +3027,8 @@ void HandleClient(SOCKET clientSock) {
         }
         std::ostringstream ss;
         ss << "{\"success\":" << (pr.success ? "true" : "false")
+           << ",\"activeProfileId\":" << JsonString(g_activeProfileId)
+           << ",\"detectedVehicle\":" << JsonString(g_detectedVehicleDesc)
            << ",\"step\":" << JsonString(pr.step)
            << ",\"message\":" << JsonString(pr.message)
            << ",\"log\":[";
@@ -3018,6 +3053,8 @@ void HandleClient(SOCKET clientSock) {
         ProcedureResult pr = ExecuteDbActiveTest(testName, mode.empty() ? "start" : mode, baseId);
         std::ostringstream ss;
         ss << "{\"success\":" << (pr.success ? "true" : "false")
+           << ",\"activeProfileId\":" << JsonString(g_activeProfileId)
+           << ",\"detectedVehicle\":" << JsonString(g_detectedVehicleDesc)
            << ",\"step\":" << JsonString(pr.step)
            << ",\"message\":" << JsonString(pr.message)
            << ",\"log\":[";
@@ -3035,6 +3072,8 @@ void HandleClient(SOCKET clientSock) {
         ProcedureResult pr = ExecuteDbUtility(code, baseId);
         std::ostringstream ss;
         ss << "{\"success\":" << (pr.success ? "true" : "false")
+           << ",\"activeProfileId\":" << JsonString(g_activeProfileId)
+           << ",\"detectedVehicle\":" << JsonString(g_detectedVehicleDesc)
            << ",\"step\":" << JsonString(pr.step)
            << ",\"message\":" << JsonString(pr.message)
            << ",\"log\":[";
@@ -3056,6 +3095,8 @@ void HandleClient(SOCKET clientSock) {
         ProcedureResult pr = ExecuteHiddenFeatureCoding(featureId, optVal);
         std::ostringstream ss;
         ss << "{\"success\":" << (pr.success ? "true" : "false")
+           << ",\"activeProfileId\":" << JsonString(g_activeProfileId)
+           << ",\"detectedVehicle\":" << JsonString(g_detectedVehicleDesc)
            << ",\"step\":" << JsonString(pr.step)
            << ",\"message\":" << JsonString(pr.message)
            << ",\"log\":[";
@@ -3246,7 +3287,7 @@ int main(int argc, char** argv)
         if (BuildDbCatalogJson(93, "").find("DSL-01") == std::string::npos) return 27;
         // Audit regression guards: unidentified mode gating, K-Line DTC rejection, SAS post-verify, Immo payload validators
         g_identityMatch = IdentityMatch{};
-        if (IsServiceSupportedForProfile("sas", "auto") || IsServiceSupportedForProfile("clear", "auto")) return 28;
+        if (IsServiceSupportedForProfile("sas", "auto") || !IsServiceSupportedForProfile("clear", "auto")) return 28;
         std::vector<DTCEntry> klDtcs;
         ModuleScanResult klRejRes;
         std::vector<std::vector<unsigned char>> klRejResp = {{}, {}, {}, {}, {0x7F, 0x18, 0x11}, {0x7F, 0x18, 0x11}, {0x61, 0x08, 0x01}};

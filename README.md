@@ -135,7 +135,7 @@ The following diagnostic scan, DTC clear, live database telemetry, and coding-re
 | **SRS Airbag** | K-Line Pin 7 | `ISO 14230` Fast Init (`0x59`) | • Part Number Read (`21 80` -> `38910-65J3*`)<br>• Body DTC Inspection (`18 00 80 00` -> `B1013` historical) & Clear (`14 80 00` -> `54`, cleared to `0 DTC`) | **READ / SCAN / DTC CLEAR VERIFIED** |
 | **Keyless & Immobilizer (KLS/IMM)** | K-Line Pin 7 & CAN | `ISO 14230` (`0x5D`) / CAN (`0x7E0`) | • Part Number Read (`21 80` -> `33970-67J0*`)<br>• Body DTC Inspection (`18 00 80 00` -> `B1705`) & Clear (`14 80 00` -> `54`)<br>• Registered Key Count Read (`21 A1` -> `1 Key`) | **READ / SCAN / DTC CLEAR VERIFIED** *(Key programming untested)* |
 | **HVAC / Climate Control** | K-Line Pin 7 | `ISO 14230` Fast Init (`0x99`) | • ECU Identity Read (`21 80` -> `61 80 01 95...`)<br>• Body DTC Inspection (`18 00 80 00` -> `B1521`) & Clear (`14 80 00`) | **READ / SCAN VERIFIED** |
-| **Vehicle Architecture Filter** | Frontend & C++ | Multi-Tab Safety Core | • Fails closed on unidentified `auto` / unknown profiles for all writes, BCM coding, SAS calibration, and DTC clear<br>• Disables unsupported features per model profile | **ACTIVE SAFETY GUARD** |
+| **Vehicle Architecture Filter** | Frontend & C++ | Multi-Tab Safety Core | • Fails closed on unidentified `auto` / unknown profiles for all calibrations, BCM coding, and EEPROM writes (standard `0x14`/`0x04` DTC clear works in `auto` mode with automatic ECU detection)<br>• Disables unsupported features per model profile | **ACTIVE SAFETY GUARD** |
 | **Telemetry CSV Recorder** | Native Web App | Client-side File Stream | • Real-time road-test telemetry logging to timestamped CSV files | **VERIFIED** |
 
 ---

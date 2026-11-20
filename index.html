@@ -1647,6 +1647,11 @@ async function runService(svcKey){
     stopPolling();
     $('serviceLog').textContent=t('working');
     const d=await api(endpoints[svcKey],'POST',null,60000);
+    if(d?.activeProfileId && d.activeProfileId!==state.activeProfile){
+      state.activeProfile=d.activeProfileId;
+      renderProfiles();
+      renderKline();
+    }
     $('serviceLog').textContent=(d.message?d.message+'\n\n':'')+(Array.isArray(d.log)?d.log.join('\n'):JSON.stringify(d,null,2));
     if(!d.success){
       alert(d.message || (lang==='tr'?'İşlem tamamlanamadı.':'Operation failed.'));

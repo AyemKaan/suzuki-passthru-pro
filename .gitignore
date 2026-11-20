@@ -9,6 +9,12 @@
 .vs/
 dist/
 temp_cdp_profile/
+src_backup/
+*.zip
+YAPILAN_ISLEMLER.md
+Suzuki_Diyagnostik_Baslat.bat
+discovery-plan.js
+Build_and_Push_GitHub.bat
 
 # Databases & Decrypted OEM Assets
 *.db
